@@ -10,11 +10,17 @@ class PaymentMethod extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
+        'title',
         'description',
         'icon'
     ];
 
+    public function casts()
+    {
+        return [
+            'description' => 'array'
+        ];
+    }
     public function payments()
     {
         return $this->hasMany(Payment::class, 'payment_method_id');
