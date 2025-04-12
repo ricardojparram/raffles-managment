@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('raffles', function (Blueprint $table) {
+        Schema::create('raffle_prizes', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('raffle_id')->constrained('raffles');
             $table->string('title');
+            $table->string('img');
             $table->timestamp('date');
-            $table->decimal('ticket_price', 10, 2);
-            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('raffles');
+        Schema::dropIfExists('raffle_prizes');
     }
 };

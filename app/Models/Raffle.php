@@ -36,4 +36,8 @@ class Raffle extends Model
     {
         return $this->hasMany(Payment::class);
     }
+    public function raffle_prizes()
+    {
+        return $this->hasMay(RafflePrize::class);
+    }
 }
