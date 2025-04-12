@@ -16,11 +16,11 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained('customers');
             $table->decimal('amount', 10, 2);
             $table->enum('status', ['pending', 'confirmed', 'rejected'])->default('pending');
-            $table->timestamp('payment_date')->nullable();
-            $table->foreignId('raffle_id')->nullable()->constrained('raffles');
-            $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods');
-            $table->string('reference')->nullable();
-            $table->binary('img')->nullable();
+            $table->timestamp('payment_date');
+            $table->foreignId('raffle_id')->constrained('raffles');
+            $table->foreignId('payment_method_id')->constrained('payment_methods');
+            $table->string('reference');
+            $table->string('img');
             $table->timestamps();
         });
     }
