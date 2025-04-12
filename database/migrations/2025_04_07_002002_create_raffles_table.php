@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->timestamp('date');
+            $table->string('img')->nullable();
             $table->decimal('ticket_price', 10, 2);
-            $table->text('description')->nullable();
+            $table->text('description');
             $table->timestamps();
         });
     }

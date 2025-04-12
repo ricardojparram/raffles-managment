@@ -13,6 +13,7 @@ class Raffle extends Model
     protected $fillable = [
         'title',
         'date',
+        'img',
         'ticket_price',
         'description'
     ];
