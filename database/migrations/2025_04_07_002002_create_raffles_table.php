@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('img')->nullable();
             $table->decimal('ticket_price', 10, 2);
             $table->text('description');
+            $table->enum('status', ['active', 'canceled', 'finished', 'pending'])->default('pending');
+            $table->integer('ticket_amount')->default(100);
+            $table->integer('minimum_tickets')->default(1);
             $table->timestamps();
         });
     }
