@@ -9,9 +9,12 @@ use Filament\Tables\Table;
 use Filament\Support\RawJs;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Grid;
+use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\Split;
+use Filament\Support\Enums\Alignment;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
@@ -21,6 +24,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\DateTimePicker;
 use App\Filament\Resources\RaffleResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use App\Filament\Resources\RaffleResource\RelationManagers;
 
 class RaffleResource extends Resource
@@ -37,43 +41,94 @@ class RaffleResource extends Resource
 
     public static function form(Form $form): Form
     {
-        $decimalStateFormating = fn($state) => ($state == '') ? '' : str_replace('.', ',', $state / 100);
-        $moneyMask = RawJs::make("\$money(\$input, ',', '.', 2)");
         return $form
             ->schema([
                 Split::make([
+                    Section::make('Datos de la rifa')
+                        ->columns(['default' => 1, 'lg' => 3])
+                        ->schema([
+                            TextInput::make('title')
+                                ->label('Titulo')
+                                ->rules(['required', 'string', 'max:255'])
+                                ->markAsRequired()
+                                ->maxLength(255),
+                            DateTimePicker::make('date')
+                                ->required()
+                                ->seconds(false)
+                                ->native(false)
+                                ->label('Fecha de la rifa')
+                                ->placeholder('Selecciona la fecha de la rifa'),
+                            TextInput::make('ticket_price')
+                                ->rules(['required', 'numeric'])
+                                ->markAsRequired()
+                                ->label('Precio del ticket')
+                                ->numeric()
+                                ->minValue(1)
+                                ->prefix('$'),
+
+                            FileUpload::make('img')
+                                ->required()
+                                ->label('Imagen')
+                                ->image()
+                                ->imageEditor()
+                                ->columnSpanFull(),
+                            RichEditor::make('description')
+                                ->required()
+                                ->label('Descripción de la rifa')
+                                ->placeholder('Escribe una descripción de la rifa')
+                                ->columnSpanFull(),
+                        ]),
                     Grid::make(1)->schema([
-                        TextInput::make('title')
-                            ->label('Titulo')
-                            ->rules(['required', 'string', 'max:255'])
-                            ->maxLength(255),
-                        DateTimePicker::make('date')
-                            ->rules(['required', 'date'])
-                            ->seconds(false)
-                            ->native(false)
-                            ->label('Fecha de la rifa')
-                            ->placeholder('Selecciona la fecha de la rifa'),
-                        TextInput::make('ticket_price')
-                            ->rules(['required', 'numeric'])
-                            ->label('Precio del ticket')
-                            ->numeric()
-                            ->minValue(1)
-                            ->formatStateUsing($decimalStateFormating)
-                            ->mask($moneyMask)
-                            ->prefix('$'),
-                        FileUpload::make('img')
-                            ->required('La imagen es requerido')
-                            ->label('Imagen')
-                            ->image()
-                            ->imageEditor(),
-                    ])->grow(false),
-                    Grid::make(1)->schema([
-                        RichEditor::make('description')
-                            ->rules(['required'])
-                            ->label('Descripción de la rifa')
-                            ->placeholder('Escribe una descripción de la rifa'),
-                    ])
-                ])->from('md')->columnSpanFull()
+                        Section::make('Premios')->description('Indica los premios además del premio principal')->schema([
+                            Repeater::make('raffle_prizes')
+                                ->label('')
+                                ->relationship()
+                                ->collapsed()
+                                ->addActionLabel('Agregar premio')
+                                ->addActionAlignment(Alignment::End)
+                                ->itemLabel(fn(array $state): ?string => isset($state['title'], $state['date']) ? $state['title'] . ' el ' .  date('d/m/Y', strtotime($state['date'])) : null)
+                                ->live(true)
+                                ->schema([
+                                    TextInput::make('title')
+                                        ->label('Titulo')
+                                        ->rules(['string', 'max:255'])
+                                        ->maxLength(255),
+                                    DateTimePicker::make('date')
+                                        ->rules(['date'])
+                                        ->seconds(false)
+                                        ->native(false)
+                                        ->label('Fecha de la rifa')
+                                        ->placeholder('Selecciona la fecha de la rifa'),
+                                    FileUpload::make('img')
+                                        ->label('Imagen')
+                                        ->image()
+                                        ->imageEditor()
+                                ])
+                        ]),
+                        Section::make('Ofertas')->description('Ofertas o descuentos por tickets')->schema([
+                            Repeater::make('offers')
+                                ->label('')
+                                ->relationship()
+                                ->collapsed()
+                                ->addActionLabel('Agregar oferta')
+                                ->addActionAlignment(Alignment::End)
+                                ->reorderableWithButtons()
+                                ->itemLabel(fn(array $state): ?string => isset($state['ticket_amount'], $state['price']) ? $state['ticket_amount'] . " tickets x $" . $state['price'] : null)
+                                ->live(true)
+                                ->schema([
+                                    TextInput::make('ticket_amount')
+                                        ->label('Cantidad de tickets')
+                                        ->rules(['numeric'])
+                                        ->maxLength(255),
+                                    TextInput::make('price')
+                                        ->rules(['numeric'])
+                                        ->label('Monto')
+                                        ->minValue(1)
+                                        ->prefix('$'),
+                                ])
+                        ])
+                    ])->grow(false)
+                ])->from('md')->columnSpanFull(),
 
             ]);
     }
@@ -82,8 +137,6 @@ class RaffleResource extends Resource
     {
         return $table
             ->columns([
-                //
-
                 ImageColumn::make('img')
                     ->label('Imagen')
                     ->size(50),
@@ -118,6 +171,7 @@ class RaffleResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()->modalWidth(\Filament\Support\Enums\MaxWidth::ScreenExtraLarge)
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
