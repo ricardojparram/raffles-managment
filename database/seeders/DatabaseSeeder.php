@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Customer;
+use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -27,5 +27,9 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('admin123'),
         ]);
         Customer::factory(10)->create();
+
+        $this->call([
+            RaffleSeeder::class
+        ]);
     }
 }
