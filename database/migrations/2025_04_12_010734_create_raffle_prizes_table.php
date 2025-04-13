@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('raffle_id')->constrained('raffles');
             $table->string('title');
-            $table->string('img');
+            $table->string('img')->nullable();
             $table->timestamp('date');
             $table->timestamps();
         });
