@@ -3,29 +3,25 @@
 namespace App\Filament\Resources;
 
 use Filament\Tables;
+use App\Enums\Status;
 use App\Models\Raffle;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Filament\Support\RawJs;
+use Illuminate\Support\Str;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Grid;
-use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\Split;
 use Filament\Support\Enums\Alignment;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\DateTimePicker;
 use App\Filament\Resources\RaffleResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
-use App\Filament\Resources\RaffleResource\RelationManagers;
+use Guava\FilamentIconSelectColumn\Tables\Columns\IconSelectColumn;
 
 class RaffleResource extends Resource
 {
@@ -140,16 +136,14 @@ class RaffleResource extends Resource
                 ImageColumn::make('img')
                     ->label('Imagen')
                     ->size(50),
-                TextColumn::make('title')
-                    ->label('Titulo')
-                    ->sortable()
-                    ->searchable()
-                    ->limit(50),
+                TextColumn::make('title')->label('Datos de la rifa')->searchable()->sortable()->description(function ($record) {
+                    return Str::words(strip_tags($record->description), 8, '...');
+                }),
                 TextColumn::make('date')
                     ->label('Fecha de la rifa')
                     ->sortable()
                     ->searchable()
-                    ->dateTime('d/m/Y H:i')
+                    ->dateTime('d/m/y h:i a')
                     ->limit(50),
                 TextColumn::make('ticket_price')
                     ->label('Precio del ticket')
@@ -158,13 +152,9 @@ class RaffleResource extends Resource
                     ->money('MXN', true)
                     ->formatStateUsing(fn($state) => '$' . number_format($state, 2))
                     ->limit(50),
-                TextColumn::make('description')
-                    ->label('Descripción de la rifa')
-                    ->sortable()
-                    ->searchable()
-                    ->limit(50)
-                    ->html()
-                    ->formatStateUsing(fn($state) => strip_tags($state)),
+                IconSelectColumn::make('status')
+                    ->options(Status::class)
+                    ->closeOnSelection()
             ])
             ->filters([
                 //
