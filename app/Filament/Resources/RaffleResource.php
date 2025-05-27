@@ -82,7 +82,12 @@ class RaffleResource extends Resource
                                 ->collapsed()
                                 ->addActionLabel('Agregar premio')
                                 ->addActionAlignment(Alignment::End)
-                                ->itemLabel(fn(array $state): ?string => isset($state['title'], $state['date']) ? $state['title'] . ' el ' .  date('d/m/Y', strtotime($state['date'])) : null)
+                                ->itemLabel(function (array $state): ?string {
+                                    $date = isset($state['date']) ? date('d/m/y h:i a', strtotime($state['date'])) : null;
+                                    $name = $state['title'] ?? null;
+                                    $name .= $date ? " el $date" : null;
+                                    return $name;
+                                })
                                 ->live(true)
                                 ->schema([
                                     TextInput::make('title')
