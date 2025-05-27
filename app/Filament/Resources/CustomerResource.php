@@ -28,13 +28,20 @@ class CustomerResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\TextInput::make('dni')
+                    ->label('Identificación')
+                    ->required()
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('name')
+                    ->label('Nombre')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('lastname')
+                    ->label('Apellido')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('phone')
+                    ->label('Teléfono')
                     ->required()
                     ->tel()
                     ->prefix('+58')
@@ -46,6 +53,10 @@ class CustomerResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('dni')
+                    ->sortable()
+                    ->searchable()
+                    ->label('Identificación'),
                 Tables\Columns\TextColumn::make('name')
                     ->sortable()
                     ->searchable()
