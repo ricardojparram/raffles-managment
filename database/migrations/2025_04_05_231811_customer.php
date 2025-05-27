@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
+            $table->string('dni')->unique();
             $table->string('name');
             $table->string('lastname');
+            $table->string('fullname')->virtualAs('name || \' \' || lastname');
             $table->string('phone');
             $table->timestamps();
         });
