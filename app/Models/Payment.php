@@ -25,9 +25,9 @@ class Payment extends Model
         'payment_date' => 'datetime'
     ];
 
-    public const PENDING_STATUS = 'pendiente';
-    public const CONFIRMED_STATUS = 'confirmado';
-    public const REJECTED_STATUS = 'rechazado';
+    public const PENDING_STATUS = 'pending';
+    public const CONFIRMED_STATUS = 'confirmed';
+    public const REJECTED_STATUS = 'rejected';
 
     public static function statusOptions()
     {
