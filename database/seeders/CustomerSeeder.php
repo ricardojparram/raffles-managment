@@ -13,6 +13,12 @@ class CustomerSeeder extends Seeder
      */
     public function run(): void
     {
-        Customer::factory(10)->create();
+        Customer::create([
+            'dni' => '30125380',
+            'name' => 'Ricardo',
+            'lastname' => 'Parra',
+            'phone' => '+584120503888',
+        ]);
+        Customer::factory(20)->create();
     }
 }
