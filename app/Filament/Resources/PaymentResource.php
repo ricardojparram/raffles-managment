@@ -20,8 +20,12 @@ use Guava\FilamentIconSelectColumn\Tables\Columns\IconSelectColumn;
 class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
+    protected static ?string $slug = 'pagos';
+    protected static ?string $label = "pago";
+    protected static ?string $pluralLabel = "pagos";
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationLabel = 'Pagos';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     public static function form(Form $form): Form
     {
@@ -30,6 +34,7 @@ class PaymentResource extends Resource
                 Forms\Components\Select::make('customer_id')
                     ->relationship(name: 'customer')
                     ->getOptionLabelFromRecordUsing(fn(Customer $record) => "{$record->dni} - {$record->fullname}")
+                    ->preload()
                     ->searchable(['dni', 'fullname'])
                     ->required()
                     ->label('Cliente')
