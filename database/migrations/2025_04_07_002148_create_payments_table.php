@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamp('payment_date');
             $table->foreignId('raffle_id')->constrained('raffles');
             $table->foreignId('payment_method_id')->constrained('payment_methods');
-            $table->string('reference');
+            $table->string('reference')->nullable();
             $table->string('img')->nullable();
             $table->timestamps();
         });
