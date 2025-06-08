@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Tenancy\RegisterTeam;
+use App\Http\Middleware\ApplyTenantScopes;
+use App\Models\Team;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\Widgets;
@@ -67,6 +70,15 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->tenant(Team::class, 'slug')
+            ->tenantRegistration(RegisterTeam::class)
+            ->registration()
+            // ->tenantProfile(\App\Filament\Pages\Tenancy\EditTeamProfile::class)
+            ->tenantMiddleware([
+                ApplyTenantScopes::class,
+                \Spatie\Multitenancy\Http\Middleware\NeedsTenant::class,
+                \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
+            ], isPersistent: true);
     }
 }
