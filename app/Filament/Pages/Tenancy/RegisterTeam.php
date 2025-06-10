@@ -11,7 +11,7 @@ class RegisterTeam extends RegisterTenant
 {
     public static function getLabel(): string
     {
-        return 'Create Organization';
+        return 'Crea tu organización';
     }
 
     public function form(Form $form): Form
@@ -19,6 +19,7 @@ class RegisterTeam extends RegisterTenant
         return $form
             ->schema([
                 TextInput::make('name')
+                    ->label('Nombre de tu organización')
                     ->required()
                     ->maxLength(255),
             ]);
