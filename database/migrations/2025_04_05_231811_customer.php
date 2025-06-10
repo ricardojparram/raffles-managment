@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->string('dni')->unique();
+            $table->string('dni');
+            $table->foreignId('team_id')->constrained();
             $table->string('name');
             $table->string('lastname');
             $table->string('fullname')->virtualAs('name || \' \' || lastname');
             $table->string('phone');
+            $table->unique(['dni', 'team_id']);
             $table->timestamps();
         });
     }

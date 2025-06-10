@@ -21,6 +21,7 @@ class CustomerFactory extends Factory
             'name' => fake()->firstName(),
             'lastname' => fake()->lastName(),
             'phone' => fake()->phoneNumber(),
+            'team_id' => 1,
         ];
     }
 }

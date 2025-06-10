@@ -15,6 +15,7 @@ class PaymentMethodsSeeder extends Seeder
     {
         PaymentMethod::create([
             'title' => 'Pago movil',
+            'team_id' => 1,
             'description' => [
                 "Cédula" => "30125380",
                 "Teléfono" => "04120503888",

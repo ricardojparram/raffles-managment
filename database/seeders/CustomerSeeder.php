@@ -13,7 +13,7 @@ class CustomerSeeder extends Seeder
      */
     public function run(): void
     {
-        Customer::create([
+        Customer::factory()->create([
             'dni' => '30125380',
             'name' => 'Ricardo',
             'lastname' => 'Parra',

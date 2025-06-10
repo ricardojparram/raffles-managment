@@ -23,6 +23,7 @@ class RaffleSeeder extends Seeder
             'status' => 'pending',
             'ticket_amount' => 100,
             'minimum_tickets' => 1,
+            'team_id' => 1,
         ]);
         $raffle->raffle_prizes()->createMany([
             [
