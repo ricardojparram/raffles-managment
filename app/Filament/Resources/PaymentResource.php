@@ -15,7 +15,10 @@ use Filament\Tables\Table;
 use App\Models\Customer;
 use App\Models\Raffle;
 use App\Models\PaymentMethod;
+use Filament\Facades\Filament;
 use Guava\FilamentIconSelectColumn\Tables\Columns\IconSelectColumn;
+use Illuminate\Database\Eloquent\Builder;
+use Spatie\Multitenancy\Models\Tenant;
 
 class PaymentResource extends Resource
 {
@@ -26,6 +29,8 @@ class PaymentResource extends Resource
 
     protected static ?string $navigationLabel = 'Pagos';
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static bool $isScopedToTenant = false; // Desactivar filtrado automático
+    // protected static ?string $tenantRelationshipName = 'raffle';
 
     public static function form(Form $form): Form
     {
@@ -132,6 +137,9 @@ class PaymentResource extends Resource
                     ->sortable()
                     ->label('Fecha de pago'),
             ])
+            ->modifyQueryUsing(function (Builder $query) {
+                return $query->whereHas('raffle', fn($query) => $query->where('team_id', Filament::getTenant()->getKey()));
+            })
             ->filters([
                 //
             ])
