@@ -73,12 +73,12 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->tenant(Team::class, 'slug')
             ->tenantRegistration(RegisterTeam::class)
-            ->registration()
-            // ->tenantProfile(\App\Filament\Pages\Tenancy\EditTeamProfile::class)
-            ->tenantMiddleware([
-                ApplyTenantScopes::class,
-                \Spatie\Multitenancy\Http\Middleware\NeedsTenant::class,
-                \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
-            ], isPersistent: true);
+            ->registration();
+        // ->tenantProfile(\App\Filament\Pages\Tenancy\EditTeamProfile::class)
+        // ->tenantMiddleware([
+        //     ApplyTenantScopes::class,
+        //     \Spatie\Multitenancy\Http\Middleware\NeedsTenant::class,
+        //     \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
+        // ], isPersistent: true);
     }
 }
