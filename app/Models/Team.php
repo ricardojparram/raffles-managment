@@ -19,6 +19,23 @@ class Team extends Tenant
             ->withPivot('role')
             ->withTimestamps();
     }
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    public function raffles()
+    {
+        return $this->hasMany(Raffle::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
