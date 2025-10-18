@@ -35,6 +35,11 @@ class Team extends Tenant
         return $this->hasMany(Payment::class);
     }
 
+    public function paymentMethods()
+    {
+        return $this->hasMany(PaymentMethod::class);
+    }
+
 
     public function getSlugOptions(): SlugOptions
     {
