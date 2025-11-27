@@ -2,17 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Flex;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Support\Enums\Width;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\RaffleResource\Pages\ListRaffles;
+use App\Filament\Resources\RaffleResource\Pages\CreateRaffle;
+use App\Filament\Resources\RaffleResource\Pages\EditRaffle;
 use Filament\Tables;
 use App\Enums\Status;
 use App\Models\Raffle;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Filament\Resources\Resource;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Split;
 use Filament\Support\Enums\Alignment;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
@@ -22,6 +30,7 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\DateTimePicker;
 use App\Filament\Resources\RaffleResource\Pages;
 use Guava\FilamentIconSelectColumn\Tables\Columns\IconSelectColumn;
+use Filament\Support\Enums\IconSize;
 
 class RaffleResource extends Resource
 {
@@ -32,14 +41,14 @@ class RaffleResource extends Resource
     protected static ?string $pluralLabel = "rifas";
 
     protected static ?string $navigationLabel = 'Rifas';
-    protected static ?string $navigationIcon = 'heroicon-o-gift';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-gift';
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Split::make([
+        return $schema
+            ->components([
+                Flex::make([
                     Section::make('Datos de la rifa')
                         ->columns(['default' => 1, 'lg' => 3])
                         ->schema([
@@ -159,18 +168,19 @@ class RaffleResource extends Resource
                     ->limit(50),
                 IconSelectColumn::make('status')
                     ->options(Status::class)
-                    ->closeOnSelection()
+                    ->size(IconSize::Large),
+
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make()->modalWidth(\Filament\Support\Enums\MaxWidth::ScreenExtraLarge)
+            ->recordActions([
+                EditAction::make(),
+                ViewAction::make()->modalWidth(Width::ScreenExtraLarge)
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -185,9 +195,9 @@ class RaffleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListRaffles::route('/'),
-            'create' => Pages\CreateRaffle::route('/create'),
-            'edit' => Pages\EditRaffle::route('/{record}/edit'),
+            'index' => ListRaffles::route('/'),
+            'create' => CreateRaffle::route('/create'),
+            'edit' => EditRaffle::route('/{record}/edit'),
         ];
     }
 }

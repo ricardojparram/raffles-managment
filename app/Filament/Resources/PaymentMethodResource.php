@@ -2,9 +2,15 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\PaymentMethodResource\Pages\ListPaymentMethods;
+use App\Filament\Resources\PaymentMethodResource\Pages\CreatePaymentMethod;
+use App\Filament\Resources\PaymentMethodResource\Pages\EditPaymentMethod;
 use Filament\Forms;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Models\PaymentMethod;
 use Filament\Resources\Resource;
@@ -28,12 +34,12 @@ class PaymentMethodResource extends Resource
 
     protected static ?string $navigationLabel = 'Metodos de pago';
 
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextInput::make('title')
                     ->label('Nombre')
                     ->rules(['required', 'string', 'max:255'])
@@ -68,12 +74,12 @@ class PaymentMethodResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -88,9 +94,9 @@ class PaymentMethodResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPaymentMethods::route('/'),
-            'create' => Pages\CreatePaymentMethod::route('/create'),
-            'edit' => Pages\EditPaymentMethod::route('/{record}/edit'),
+            'index' => ListPaymentMethods::route('/'),
+            'create' => CreatePaymentMethod::route('/create'),
+            'edit' => EditPaymentMethod::route('/{record}/edit'),
         ];
     }
 }

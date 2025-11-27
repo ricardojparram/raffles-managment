@@ -2,12 +2,22 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\PaymentResource\Pages\ListPayments;
+use App\Filament\Resources\PaymentResource\Pages\CreatePayment;
+use App\Filament\Resources\PaymentResource\Pages\EditPayment;
 use App\Filament\Resources\PaymentResource\Pages;
 use App\Filament\Resources\PaymentResource\RelationManagers;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -17,6 +27,7 @@ use App\Models\Raffle;
 use App\Models\PaymentMethod;
 use Filament\Facades\Filament;
 use Guava\FilamentIconSelectColumn\Tables\Columns\IconSelectColumn;
+use Filament\Support\Enums\IconSize;
 use Illuminate\Database\Eloquent\Builder;
 use Spatie\Multitenancy\Models\Tenant;
 
@@ -28,15 +39,15 @@ class PaymentResource extends Resource
     protected static ?string $pluralLabel = "pagos";
 
     protected static ?string $navigationLabel = 'Pagos';
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
     protected static bool $isScopedToTenant = false; // Desactivar filtrado automático
     // protected static ?string $tenantRelationshipName = 'raffle';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('customer_id')
+        return $schema
+            ->components([
+                Select::make('customer_id')
                     ->relationship(name: 'customer')
                     ->getOptionLabelFromRecordUsing(fn(Customer $record) => "{$record->dni} - {$record->fullname}")
                     ->preload()
@@ -45,19 +56,19 @@ class PaymentResource extends Resource
                     ->label('Cliente')
                     ->native(false)
                     ->createOptionForm([
-                        Forms\Components\TextInput::make('dni')
+                        TextInput::make('dni')
                             ->label('Identificación')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Nombre')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('lastname')
+                        TextInput::make('lastname')
                             ->label('Apellido')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('phone')
+                        TextInput::make('phone')
                             ->label('Teléfono')
                             ->required()
                             ->tel()
@@ -65,53 +76,53 @@ class PaymentResource extends Resource
                             ->maxLength(12),
                     ])
                     ->editOptionForm([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Nombre')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('lastname')
+                        TextInput::make('lastname')
                             ->label('Apellido')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('phone')
+                        TextInput::make('phone')
                             ->label('Teléfono')
                             ->required()
                             ->tel()
                             ->prefix('+58')
                             ->maxLength(12),
                     ]),
-                Forms\Components\TextInput::make('amount')
+                TextInput::make('amount')
                     ->label('Monto')
                     ->required()
                     ->prefix('$')
                     ->maxLength(255),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->options(Payment::statusOptions())
                     ->label('Estado')
                     ->default(Payment::PENDING_STATUS)
                     ->required(),
-                Forms\Components\DateTimePicker::make('payment_date')
+                DateTimePicker::make('payment_date')
                     ->label('Fecha de pago')
                     ->required()
                     ->seconds(false)
                     ->native(false)
                     ->placeholder('Selecciona la fecha de pago'),
-                Forms\Components\Select::make('raffle_id')
+                Select::make('raffle_id')
                     ->relationship(name: 'raffle', modifyQueryUsing: fn($query) => $query->orderBy('date', 'desc'))
                     ->getOptionLabelFromRecordUsing(fn(Raffle $record) => $record->title)
                     ->required()
                     ->label('Rifa'),
-                Forms\Components\Select::make('payment_method_id')
+                Select::make('payment_method_id')
                     ->relationship(name: 'paymentMethod')
                     ->getOptionLabelFromRecordUsing(fn(PaymentMethod $record) => $record->title)
                     ->preload()
                     ->required()
                     ->label('Método de pago'),
-                Forms\Components\TextInput::make('reference')
+                TextInput::make('reference')
                     ->label('Referencia')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\FileUpload::make('img')
+                FileUpload::make('img')
                     ->label('Imagen')
                     ->image()
                     ->imageEditor()
@@ -130,7 +141,8 @@ class PaymentResource extends Resource
                 TextColumn::make('reference')->sortable()->searchable()->label('Referencia'),
                 IconSelectColumn::make('status')
                     ->options(PaymentStatus::class)
-                    ->closeOnSelection(),
+                    ->size(IconSize::Large),
+
                 TextColumn::make('payment_date')
                     ->since()
                     ->dateTimeTooltip()
@@ -143,12 +155,12 @@ class PaymentResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -163,9 +175,9 @@ class PaymentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPayments::route('/'),
-            'create' => Pages\CreatePayment::route('/create'),
-            'edit' => Pages\EditPayment::route('/{record}/edit'),
+            'index' => ListPayments::route('/'),
+            'create' => CreatePayment::route('/create'),
+            'edit' => EditPayment::route('/{record}/edit'),
         ];
     }
 }
