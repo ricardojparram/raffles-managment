@@ -6,7 +6,6 @@ use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use App\Filament\Pages\Tenancy\RegisterTeam;
-use App\Http\Middleware\ApplyTenantScopes;
 use App\Models\Team;
 use Filament\Pages;
 use Filament\Panel;
@@ -48,7 +47,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Orange,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -76,12 +75,41 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->tenant(Team::class, 'slug')
             ->tenantRegistration(RegisterTeam::class)
+            ->sidebarCollapsibleOnDesktop()
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                fn (): string => \Illuminate\Support\Facades\Blade::render('
+                    <style>
+                        .fi-topbar {
+                            background-color: #f9fafb !important; /* tailwind gray-50 */
+                            border-bottom: none !important;
+                            box-shadow: none !important;
+                        }
+                        .dark .fi-topbar {
+                            background-color: #09090b !important; /* tailwind zinc-950 */
+                        }
+                        .fi-topbar > nav {
+                            background-color: transparent !important;
+                        }
+                        /* Premium Sidebar Animations */
+                        .fi-sidebar {
+                            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                            will-change: width;
+                        }
+                        .fi-sidebar-item-label {
+                            transition: opacity 0.3s ease, transform 0.3s ease !important;
+                        }
+                        /* Animate the collapse button (chevron) moving / translating */
+                        .fi-sidebar-collapse-btn {
+                            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                        }
+                        .fi-sidebar-collapse-btn:hover {
+                            transform: translateX(4px);
+                        }
+                    </style>
+                ')
+            )
             ->registration();
         // ->tenantProfile(\App\Filament\Pages\Tenancy\EditTeamProfile::class)
-        // ->tenantMiddleware([
-        //     ApplyTenantScopes::class,
-        //     \Spatie\Multitenancy\Http\Middleware\NeedsTenant::class,
-        //     \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
-        // ], isPersistent: true);
     }
 }

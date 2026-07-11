@@ -22,3 +22,5 @@ yarn-error.log
 /.vscode
 /.zed
 .qodo
+/public/css/filament
+/public/js/filament
