@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\EditAction;
@@ -49,13 +50,28 @@ class UserResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('name')->required()->label(__('Name')),
-                TextInput::make('email')->email()->required()->label(__('Email')),
-                TextInput::make('password')
-                    ->password()
-                    ->required()
-                    ->label(__('Password')),
-
+                Section::make(__('User Details'))
+                    ->description(__('Provide the user\'s basic information.'))
+                    ->icon('heroicon-o-user')
+                    ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255)
+                            ->label(__('Name')),
+                        TextInput::make('email')
+                            ->email()
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true)
+                            ->label(__('Email')),
+                        TextInput::make('password')
+                            ->password()
+                            ->required(fn (string $operation): bool => $operation === 'create')
+                            ->dehydrated(fn (?string $state) => filled($state))
+                            ->maxLength(255)
+                            ->label(__('Password')),
+                    ])
+                    ->columns(2),
             ]);
     }
 
