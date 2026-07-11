@@ -6,18 +6,17 @@ use App\Models\Concerns\BelongsToTeam;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
-use Spatie\Multitenancy\Models\Tenant;
 
 class Payment extends Model
 {
     use HasFactory;
-    use UsesTenantConnection;
     use BelongsToTeam;
 
     protected $fillable = [
+        'team_id',
         'customer_id',
         'amount',
+        'currency',
         'status',
         'payment_date',
         'raffle_id',
@@ -27,7 +26,7 @@ class Payment extends Model
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
+        'amount' => 'integer',
         'payment_date' => 'datetime'
     ];
 

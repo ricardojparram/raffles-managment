@@ -5,12 +5,10 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTeam;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class Raffle extends Model
 {
     use HasFactory;
-    use UsesTenantConnection;
     use BelongsToTeam;
 
 
@@ -18,13 +16,14 @@ class Raffle extends Model
         'title',
         'date',
         'img',
+        'currency',
         'ticket_price',
         'description'
     ];
 
     protected $casts = [
         'date' => 'datetime',
-        'ticket_price' => 'decimal:2'
+        'ticket_price' => 'integer'
     ];
 
     public function tickets()

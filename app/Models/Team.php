@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Spatie\Multitenancy\Models\Tenant;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Team extends Tenant
+class Team extends Model
 {
     use HasSlug;
 
@@ -50,27 +50,4 @@ class Team extends Tenant
             ->slugsShouldBeNoLongerThan(50);
     }
 
-    public function getTenantKey()
-    {
-        return $this->getKey();
-    }
-    public function getDatabaseName(): string
-    {
-        // Retorna el nombre de tu base de datos central
-        return env('DB_DATABASE', 'laravel');
-    }
-
-    // public function getDatabaseName(): string
-    // {
-    //     return $this->database_name ?? $this->generateDatabaseName();
-    // }
-
-    // protected function generateDatabaseName(): string
-    // {
-    //     $prefix = config('multitenancy.database.prefix', 'tenant_');
-    //     $this->database_name = $prefix . $this->slug;
-    //     $this->save();
-
-    //     return $this->database_name;
-    // }
 }

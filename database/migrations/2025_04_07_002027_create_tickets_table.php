@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('raffle_id')->constrained('raffles');
             $table->foreignId('customer_id')->constrained('customers');
             $table->string('number');
+            $table->unique(['raffle_id', 'number']);
             $table->timestamps();
         });
     }
