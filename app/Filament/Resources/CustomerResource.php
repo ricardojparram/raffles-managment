@@ -25,11 +25,23 @@ class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
 
-    protected static ?string $slug = 'clientes';
-    protected static ?string $label = "cliente";
-    protected static ?string $pluralLabel = "clientes";
+    protected static ?string $slug = 'customers';
 
-    protected static ?string $navigationLabel = 'Clientes';
+    public static function getLabel(): ?string
+    {
+        return __('Customer');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('Customers');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Customers');
+    }
+
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
 
     public static function form(Schema $schema): Schema
@@ -37,19 +49,19 @@ class CustomerResource extends Resource
         return $schema
             ->components([
                 TextInput::make('dni')
-                    ->label('Identificación')
+                    ->label(__('Identity Card'))
                     ->required()
                     ->maxLength(255),
                 TextInput::make('name')
-                    ->label('Nombre')
+                    ->label(__('Name'))
                     ->required()
                     ->maxLength(255),
                 TextInput::make('lastname')
-                    ->label('Apellido')
+                    ->label(__('Last Name'))
                     ->required()
                     ->maxLength(255),
                 TextInput::make('phone')
-                    ->label('Teléfono')
+                    ->label(__('Phone'))
                     ->required()
                     ->tel()
                     ->prefix('+58')
@@ -64,19 +76,19 @@ class CustomerResource extends Resource
                 TextColumn::make('dni')
                     ->sortable()
                     ->searchable()
-                    ->label('Identificación'),
+                    ->label(__('Identity Card')),
                 TextColumn::make('name')
                     ->sortable()
                     ->searchable()
-                    ->label('Nombre'),
+                    ->label(__('Name')),
                 TextColumn::make('lastname')
                     ->sortable()
                     ->searchable()
-                    ->label('Apellido'),
+                    ->label(__('Last Name')),
                 TextColumn::make('phone')
                     ->sortable()
                     ->searchable()
-                    ->label('Teléfono'),
+                    ->label(__('Phone')),
             ])
             ->filters([])
             ->recordActions([

@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Forms\Components\KeyValue;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
@@ -28,11 +29,22 @@ class PaymentMethodResource extends Resource
 {
     protected static ?string $model = PaymentMethod::class;
 
-    protected static ?string $slug = 'metodos-de-pago';
-    protected static ?string $label = "metodo de pago";
-    protected static ?string $pluralLabel = "metodos de pago";
+    protected static ?string $slug = 'payment-methods';
 
-    protected static ?string $navigationLabel = 'Metodos de pago';
+    public static function getLabel(): ?string
+    {
+        return __('Payment Method');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('Payment Methods');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Payment Methods');
+    }
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
 
@@ -41,21 +53,35 @@ class PaymentMethodResource extends Resource
         return $schema
             ->components([
                 TextInput::make('title')
-                    ->label('Nombre')
+                    ->label(__('Name'))
                     ->rules(['required', 'string', 'max:255'])
                     ->markAsRequired(),
+                Select::make('currency')
+                    ->label(__('Currency'))
+                    ->options(function () {
+                        $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
+                        return collect(\Akaunting\Money\Currency::getCurrencies())
+                            ->filter(fn($c, $k) => in_array($k, ['USD', 'VED']))
+                            ->mapWithKeys(function ($c, $k) use ($flags) {
+                                return [$k => "{$c['name']} {$flags[$k]} {$k} - {$c['symbol']}"];
+                            })
+                            ->toArray();
+                    })
+                    ->searchable()
+                    ->required()
+                    ->default('USD'),
 
                 FileUpload::make('icon')
                     ->required('El icono es requerido')
-                    ->label('Icono')
+                    ->label(__('Icon'))
                     ->image()
                     ->imageEditor(),
                 KeyValue::make('description')
-                    ->label('Descripción')
+                    ->label(__('Description'))
                     ->required()
-                    ->keyLabel('Titulo')
+                    ->keyLabel(__('Key'))
                     ->keyPlaceholder('Ej: Correo')
-                    ->valueLabel('Descripción')
+                    ->valueLabel(__('Value'))
                     ->valuePlaceholder('ejemplo@gmail.com')
             ]);
     }
@@ -65,9 +91,9 @@ class PaymentMethodResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('icon')
-                    ->label('Icono')
+                    ->label(__('Icon'))
                     ->size(50),
-                TextColumn::make('title')->label('Titulo')->searchable()->sortable()->description(function ($record) {
+                TextColumn::make('title')->label(__('Title'))->searchable()->sortable()->description(function ($record) {
                     return $record->description ? collect($record->description)->map(fn($value, $key) => "$key: $value")->join(', ') : null;
                 }),
             ])

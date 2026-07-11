@@ -25,11 +25,22 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $slug = 'usuarios';
-    protected static ?string $label = "usuario";
-    protected static ?string $pluralLabel = "usuarios";
+    protected static ?string $slug = 'users';
 
-    protected static ?string $navigationLabel = 'Usuarios';
+    public static function getLabel(): ?string
+    {
+        return __('User');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('Users');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Users');
+    }
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $tenantOwnershipRelationshipName = 'teams';
@@ -38,11 +49,12 @@ class UserResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('name')->required(),
-                TextInput::make('email')->email()->required(),
+                TextInput::make('name')->required()->label(__('Name')),
+                TextInput::make('email')->email()->required()->label(__('Email')),
                 TextInput::make('password')
                     ->password()
-                    ->required(),
+                    ->required()
+                    ->label(__('Password')),
 
             ]);
     }
@@ -51,8 +63,8 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->sortable()->searchable()->label('Nombre'),
-                TextColumn::make('email')->sortable()->searchable()->label('Correo'),
+                TextColumn::make('name')->sortable()->searchable()->label(__('Name')),
+                TextColumn::make('email')->sortable()->searchable()->label(__('Email')),
             ])
             ->filters([
                 //
