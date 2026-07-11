@@ -65,7 +65,7 @@ class RaffleResource extends Resource
             ->components([
                 Flex::make([
                     Section::make(__('Raffle Details'))
-                        ->columns(['default' => 1, 'lg' => 3])
+                        ->columns(['default' => 1, 'md' => 2])
                         ->schema([
                             TextInput::make('title')
                                 ->label(__('Title'))
@@ -78,27 +78,32 @@ class RaffleResource extends Resource
                                 ->native(false)
                                 ->label(__('Raffle Date'))
                                 ->placeholder(__('Select raffle date')),
-                            Group::make()->columns(2)->schema([
-                                Select::make('currency')
-                                    ->label(__('Currency'))
-                                    ->options(function () {
-                                        $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
-                                        return collect(\Akaunting\Money\Currency::getCurrencies())
-                                            ->filter(fn($c, $k) => in_array($k, ['USD', 'VED']))
-                                            ->mapWithKeys(function ($c, $k) use ($flags) {
-                                                return [$k => "{$c['name']} {$flags[$k]} {$k} - {$c['symbol']}"];
-                                            })
-                                            ->toArray();
-                                    })
-                                    ->searchable()
-                                    ->required()
-                                    ->default('USD'),
-                                TextInput::make('ticket_price')
-                                    ->rules(['required'])
-                                    ->markAsRequired()
-                                    ->label(__('Ticket Price'))
-                                    ->currencyMask(',', '.', 2),
-                            ]),
+                            Select::make('currency')
+                                ->label(__('Currency'))
+                                ->options(function () {
+                                    $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
+                                    return collect(\Akaunting\Money\Currency::getCurrencies())
+                                        ->filter(fn($c, $k) => in_array($k, ['USD', 'VED']))
+                                        ->mapWithKeys(function ($c, $k) use ($flags) {
+                                            return [$k => "{$flags[$k]} {$k} - {$c['name']}"];
+                                        })
+                                        ->toArray();
+                                })
+                                ->searchable()
+                                ->required()
+                                ->live()
+                                ->default('USD'),
+                            TextInput::make('ticket_price')
+                                ->rules(['required'])
+                                ->markAsRequired()
+                                ->label(__('Ticket Price'))
+                                ->prefix(function (\Filament\Schemas\Components\Utilities\Get $get) {
+                                    $c = $get('currency') ?? 'USD';
+                                    $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
+                                    $symbols = ['USD' => '$', 'VED' => 'Bs.'];
+                                    return trim(($flags[$c] ?? '') . ' ' . $c . ' ' . ($symbols[$c] ?? ''));
+                                })
+                                ->currencyMask(',', '.', 2),
 
                             FileUpload::make('img')
                                 ->required()
