@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Filament\Schemas\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\EditAction;
 use Filament\Actions\BulkActionGroup;
@@ -48,24 +50,34 @@ class CustomerResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('dni')
-                    ->label(__('Identity Card'))
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('name')
-                    ->label(__('Name'))
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('lastname')
-                    ->label(__('Last Name'))
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('phone')
-                    ->label(__('Phone'))
-                    ->required()
-                    ->tel()
-                    ->prefix('+58')
-                    ->maxLength(12),
+                Section::make(__('Personal Information'))
+                    ->description(__('Provide the customer\'s basic details and contact information.'))
+                    ->icon('heroicon-o-identification')
+                    ->schema([
+                        TextInput::make('name')
+                            ->label(__('Name'))
+                            ->required()
+                            ->maxLength(255)
+                            ->prefixIcon('heroicon-m-user')
+                            ->placeholder('John'),
+                        TextInput::make('lastname')
+                            ->label(__('Last Name'))
+                            ->required()
+                            ->maxLength(255)
+                            ->prefixIcon('heroicon-m-user')
+                            ->placeholder('Doe'),
+                        TextInput::make('dni')
+                            ->label(__('Identity Card'))
+                            ->required()
+                            ->maxLength(255)
+                            ->prefixIcon('heroicon-m-identification')
+                            ->placeholder('12345678'),
+                        PhoneInput::make('phone')
+                            ->label(__('Phone'))
+                            ->required()
+                            ->defaultCountry('ve')
+                            ->placeholder('412 123 4567'),
+                    ])->columns(2),
             ]);
     }
 

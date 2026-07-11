@@ -106,6 +106,30 @@ class AdminPanelProvider extends PanelProvider
                         .fi-sidebar-collapse-btn:hover {
                             transform: translateX(4px);
                         }
+                        /* Fix filament-phone-input to look perfectly native */
+                        .iti {
+                            width: 100% !important;
+                            display: block !important;
+                        }
+                        .iti__flag-container {
+                            background-color: rgb(243 244 246) !important;
+                            border-right: 1px solid rgb(229 231 235) !important;
+                            border-top-left-radius: 0.5rem !important;
+                            border-bottom-left-radius: 0.5rem !important;
+                        }
+                        .dark .iti__flag-container {
+                            background-color: rgba(255, 255, 255, 0.05) !important;
+                            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        }
+                        .iti--allow-dropdown .iti__flag-container:hover {
+                            background-color: rgb(229 231 235) !important;
+                        }
+                        .dark .iti--allow-dropdown .iti__flag-container:hover {
+                            background-color: rgba(255, 255, 255, 0.1) !important;
+                        }
+                        .iti__selected-flag {
+                            padding: 0 0.75rem !important;
+                        }
                     </style>
                 ')
             )

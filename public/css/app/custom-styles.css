@@ -1,0 +1,35 @@
+/* Estilos personalizados para corregir el contraste y colores en Filament */
+
+/* Botones primarios (ej: Crear, Guardar) */
+.fi-btn.fi-color-primary,
+.fi-btn.fi-color-primary-filled,
+button[type="submit"].fi-btn {
+    background-color: rgb(249, 115, 22) !important; /* Naranja vibrante (Tailwind Orange 500) */
+    color: #ffffff !important; /* Texto blanco forzado */
+}
+
+.fi-btn.fi-color-primary *,
+.fi-btn.fi-color-primary-filled *,
+button[type="submit"].fi-btn * {
+    color: #ffffff !important;
+}
+
+.fi-btn.fi-color-primary:hover,
+.fi-btn.fi-color-primary-filled:hover,
+button[type="submit"].fi-btn:hover {
+    background-color: rgb(234, 88, 12) !important; /* Naranja más oscuro al pasar el mouse (Orange 600) */
+}
+
+/* Items activos del menú lateral (Sidebar) */
+.fi-sidebar-item-active a,
+.fi-sidebar-item.fi-active a,
+.fi-sidebar-item-active a *,
+.fi-sidebar-item.fi-active a * {
+    color: rgb(249, 115, 22) !important; /* Mismo naranja vibrante que los botones */
+}
+
+/* Asegurar que el hover del sidebar item no interfiera */
+.fi-sidebar-item-active:hover a,
+.fi-sidebar-item.fi-active:hover a {
+    color: rgb(234, 88, 12) !important;
+}
