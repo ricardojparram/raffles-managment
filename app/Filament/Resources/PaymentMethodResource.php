@@ -21,6 +21,8 @@ use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Infolists\Components\KeyValueEntry;
 use App\Filament\Resources\PaymentMethodResource\Pages;
 use App\Filament\Resources\PaymentMethodResource\RelationManagers;
@@ -52,37 +54,57 @@ class PaymentMethodResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('title')
-                    ->label(__('Name'))
-                    ->rules(['required', 'string', 'max:255'])
-                    ->markAsRequired(),
-                Select::make('currency')
-                    ->label(__('Currency'))
-                    ->options(function () {
-                        $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
-                        return collect(\Akaunting\Money\Currency::getCurrencies())
-                            ->filter(fn($c, $k) => in_array($k, ['USD', 'VED']))
-                            ->mapWithKeys(function ($c, $k) use ($flags) {
-                                return [$k => "{$c['name']} {$flags[$k]} {$k} - {$c['symbol']}"];
-                            })
-                            ->toArray();
-                    })
-                    ->searchable()
-                    ->required()
-                    ->default('USD'),
+                Section::make(__('General Information'))
+                    ->description(__('Configure the basic settings for this payment method.'))
+                    ->icon('heroicon-o-information-circle')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('title')
+                                    ->label(__('Name'))
+                                    ->placeholder(__('e.g. Zelle, Pago Móvil, Binance'))
+                                    ->rules(['required', 'string', 'max:255'])
+                                    ->markAsRequired(),
+                                Select::make('currency')
+                                    ->label(__('Currency'))
+                                    ->options(function () {
+                                        $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
+                                        return collect(\Akaunting\Money\Currency::getCurrencies())
+                                            ->filter(fn($c, $k) => in_array($k, ['USD', 'VED']))
+                                            ->mapWithKeys(function ($c, $k) use ($flags) {
+                                                return [$k => "{$c['name']} {$flags[$k]} {$k} - {$c['symbol']}"];
+                                            })
+                                            ->toArray();
+                                    })
+                                    ->searchable()
+                                    ->required()
+                                    ->default('USD'),
+                            ]),
 
-                FileUpload::make('icon')
-                    ->required('El icono es requerido')
-                    ->label(__('Icon'))
-                    ->image()
-                    ->imageEditor(),
-                KeyValue::make('description')
-                    ->label(__('Description'))
-                    ->required()
-                    ->keyLabel(__('Key'))
-                    ->keyPlaceholder('Ej: Correo')
-                    ->valueLabel(__('Value'))
-                    ->valuePlaceholder('ejemplo@gmail.com')
+                        FileUpload::make('icon')
+                            ->required('El icono es requerido')
+                            ->label(__('Icon'))
+                            ->image()
+                            ->imageEditor()
+                            ->directory('payment-methods')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make(__('Payment Instructions'))
+                    ->description(__('Add the necessary data to make the payment (e.g. Email, Phone, ID).'))
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->schema([
+                        KeyValue::make('description')
+                            ->label(__('Details'))
+                            ->required()
+                            ->keyLabel(__('Field (e.g. Email)'))
+                            ->keyPlaceholder('Ej: Correo')
+                            ->valueLabel(__('Value'))
+                            ->valuePlaceholder('ejemplo@gmail.com')
+                            ->addActionLabel(__('Add row'))
+                            ->reorderable()
+                            ->columnSpanFull()
+                    ]),
             ]);
     }
 
