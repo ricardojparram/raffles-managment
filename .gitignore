@@ -24,3 +24,4 @@ yarn-error.log
 .qodo
 /public/css/filament
 /public/js/filament
+/.codegraph
