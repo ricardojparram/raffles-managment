@@ -9,7 +9,12 @@
         {{ mb_substr($team->name, 0, 1) }}
     </span>
     <span class="min-w-0 leading-tight">
-        <span class="text-ink-faint block text-xs font-medium">{{ __('Organized by') }}</span>
+        <span class="text-ink-faint block text-xs font-medium">
+            {{ __('Organized by') }}
+            @if (filled($team->runlot_number))
+                <span class="text-ink-soft font-normal">· RUNLOT {{ $team->runlot_number }}</span>
+            @endif
+        </span>
         <span class="block truncate text-sm font-bold">{{ $team->name }}</span>
     </span>
 </{{ $tag }}>

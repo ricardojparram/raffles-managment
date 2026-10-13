@@ -129,6 +129,11 @@ class RaffleResource extends Resource
                                 ->minValue(1)
                                 ->lte('ticket_amount')
                                 ->default(1),
+                            TextInput::make('conalot_permit')
+                                ->label(__('CONALOT Authorization'))
+                                ->placeholder('Ej. CONALOT-RIFA-2026-001')
+                                ->maxLength(255)
+                                ->helperText(__('Permit or authorization issued by CONALOT for this raffle.')),
 
                             FileUpload::make('img')
                                 ->required()

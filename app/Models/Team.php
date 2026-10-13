@@ -13,7 +13,7 @@ class Team extends Model
     use HasFactory;
     use HasSlug;
 
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['name', 'slug', 'runlot_number'];
 
     public function users(): BelongsToMany
     {

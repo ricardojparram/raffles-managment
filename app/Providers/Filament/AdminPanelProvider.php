@@ -143,7 +143,7 @@ class AdminPanelProvider extends PanelProvider
                     </style>
                 ')
             )
-            ->registration();
-        // ->tenantProfile(\App\Filament\Pages\Tenancy\EditTeamProfile::class)
+            ->registration()
+            ->tenantProfile(\App\Filament\Pages\Tenancy\EditTeamProfile::class);
     }
 }

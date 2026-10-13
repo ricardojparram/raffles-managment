@@ -40,6 +40,13 @@
 
                 <h1 id="raffle-title" class="mt-5 text-[1.625rem] leading-[1.15] font-extrabold tracking-tight text-balance">{{ $raffle->title }}</h1>
 
+                @if (filled($raffle->conalot_permit))
+                    <div class="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
+                        <x-heroicon-m-shield-check class="size-4 shrink-0" />
+                        <span>{{ __('Autorización CONALOT: :code', ['code' => $raffle->conalot_permit]) }}</span>
+                    </div>
+                @endif
+
                 <dl class="border-line divide-line mt-5 grid grid-cols-2 divide-x rounded-2xl border">
                     <div class="p-4">
                         <dt class="caption">{{ __('Price per ticket') }}</dt>

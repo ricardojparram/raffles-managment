@@ -40,6 +40,7 @@ class Raffle extends Model
         'ticket_amount',
         'minimum_tickets',
         'status',
+        'conalot_permit',
     ];
 
     protected $casts = [

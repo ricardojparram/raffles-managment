@@ -254,10 +254,18 @@ class TicketPurchaseTest extends TestCase
             ->set('selected', ['07'])
             ->call('checkout')
             ->call('submit')
-            ->assertHasErrors(['dni', 'name', 'lastname', 'phone', 'paymentMethodId', 'reference', 'proof'])
+            ->assertHasErrors(['dni', 'name', 'lastname', 'phone', 'paymentMethodId', 'reference', 'proof', 'is_adult'])
             ->assertSet('step', 'pay');
 
         $this->assertSame(0, Payment::query()->count());
+    }
+
+    public function test_reporting_a_payment_requires_adult_confirmation(): void
+    {
+        $this->readyToPay()
+            ->set('is_adult', false)
+            ->call('submit')
+            ->assertHasErrors(['is_adult']);
     }
 
     public function test_reporting_a_payment_rejects_malformed_data(): void
@@ -548,7 +556,8 @@ class TicketPurchaseTest extends TestCase
             ->set('phone', '0412 1234567')
             ->set('paymentMethodId', $this->zelle->id)
             ->set('reference', 'ABC12345')
-            ->set('proof', UploadedFile::fake()->image('capture.jpg'));
+            ->set('proof', UploadedFile::fake()->image('capture.jpg'))
+            ->set('is_adult', true);
     }
 
     protected function take(string $number): Ticket

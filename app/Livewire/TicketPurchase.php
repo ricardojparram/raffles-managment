@@ -41,9 +41,9 @@ class TicketPurchase extends Component
     /**
      * State remembered per visitor so a reload, common when switching to the bank app, loses nothing.
      */
-    private const REMEMBERED = ['selected', 'step', 'dni', 'name', 'lastname', 'phone', 'paymentMethodId', 'reference'];
+    private const REMEMBERED = ['selected', 'step', 'dni', 'name', 'lastname', 'phone', 'paymentMethodId', 'reference', 'is_adult'];
 
-    private const REMEMBERED_AFTER_PURCHASE = ['dni', 'name', 'lastname', 'phone', 'paymentMethodId'];
+    private const REMEMBERED_AFTER_PURCHASE = ['dni', 'name', 'lastname', 'phone', 'paymentMethodId', 'is_adult'];
 
     private const REMEMBERED_FOR_MINUTES = 120;
 
@@ -74,6 +74,8 @@ class TicketPurchase extends Component
     public ?int $paymentMethodId = null;
 
     public string $reference = '';
+
+    public bool $is_adult = false;
 
     /**
      * @var TemporaryUploadedFile|null
@@ -321,6 +323,7 @@ class TicketPurchase extends Component
             'paymentMethodId' => ['required', Rule::in($this->paymentMethods->modelKeys())],
             'reference' => ['required', 'string', 'regex:/^[A-Z0-9\-]{6,30}$/'],
             'proof' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'is_adult' => ['accepted'],
         ];
     }
 
@@ -343,6 +346,7 @@ class TicketPurchase extends Component
             'proof.required' => __('Attach the capture of your payment.'),
             'proof.max' => __('The capture is too heavy. Try with a smaller image.'),
             'proof.*' => __('Attach an image of your payment (JPG, PNG or WEBP).'),
+            'is_adult.accepted' => __('Debes confirmar que eres mayor de 18 años para comprar boletos.'),
         ];
     }
 

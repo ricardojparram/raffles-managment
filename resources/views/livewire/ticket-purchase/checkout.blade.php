@@ -185,6 +185,14 @@
                 </div>
             </fieldset>
 
+            <div class="card p-3.5">
+                <label class="flex items-start gap-2.5 cursor-pointer text-xs text-ink-soft select-none">
+                    <input type="checkbox" wire:model.live="is_adult" class="mt-0.5 rounded border-line text-brand focus:ring-brand size-4">
+                    <span>{{ __('Confirmo que soy mayor de 18 años y acepto participar voluntariamente en esta rifa.') }}</span>
+                </label>
+                @error('is_adult') <p class="field-error mt-1.5" role="alert">{{ $message }}</p> @enderror
+            </div>
+
             <p class="text-ink-faint flex items-start gap-2 text-xs text-pretty">
                 <x-heroicon-o-lock-closed class="mt-px size-4 shrink-0" />
                 {{ __('Your numbers stay reserved while the organizer confirms the payment.') }}
