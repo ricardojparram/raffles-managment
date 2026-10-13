@@ -2,30 +2,25 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\PaymentMethodResource\Pages\ListPaymentMethods;
+use Akaunting\Money\Currency;
 use App\Filament\Resources\PaymentMethodResource\Pages\CreatePaymentMethod;
 use App\Filament\Resources\PaymentMethodResource\Pages\EditPaymentMethod;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Tables\Table;
+use App\Filament\Resources\PaymentMethodResource\Pages\ListPaymentMethods;
 use App\Models\PaymentMethod;
-use Filament\Resources\Resource;
-use Filament\Forms\Components\KeyValue;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Infolists\Components\KeyValueEntry;
-use App\Filament\Resources\PaymentMethodResource\Pages;
-use App\Filament\Resources\PaymentMethodResource\RelationManagers;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class PaymentMethodResource extends Resource
 {
@@ -48,7 +43,7 @@ class PaymentMethodResource extends Resource
         return __('Payment Methods');
     }
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
 
     public static function form(Schema $schema): Schema
     {
@@ -69,8 +64,9 @@ class PaymentMethodResource extends Resource
                                     ->label(__('Currency'))
                                     ->options(function () {
                                         $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
-                                        return collect(\Akaunting\Money\Currency::getCurrencies())
-                                            ->filter(fn($c, $k) => in_array($k, ['USD', 'VED']))
+
+                                        return collect(Currency::getCurrencies())
+                                            ->filter(fn ($c, $k) => in_array($k, ['USD', 'VED']))
                                             ->mapWithKeys(function ($c, $k) use ($flags) {
                                                 return [$k => "{$c['name']} {$flags[$k]} {$k} - {$c['symbol']}"];
                                             })
@@ -86,6 +82,8 @@ class PaymentMethodResource extends Resource
                             ->label(__('Icon'))
                             ->image()
                             ->imageEditor()
+                            ->disk('public')
+                            ->visibility('public')
                             ->directory('payment-methods')
                             ->columnSpanFull(),
                     ]),
@@ -103,7 +101,7 @@ class PaymentMethodResource extends Resource
                             ->valuePlaceholder('ejemplo@gmail.com')
                             ->addActionLabel(__('Add row'))
                             ->reorderable()
-                            ->columnSpanFull()
+                            ->columnSpanFull(),
                     ]),
             ]);
     }
@@ -114,9 +112,10 @@ class PaymentMethodResource extends Resource
             ->columns([
                 ImageColumn::make('icon')
                     ->label(__('Icon'))
+                    ->disk('public')
                     ->size(50),
                 TextColumn::make('title')->label(__('Title'))->searchable()->sortable()->description(function ($record) {
-                    return $record->description ? collect($record->description)->map(fn($value, $key) => "$key: $value")->join(', ') : null;
+                    return $record->description ? collect($record->description)->map(fn ($value, $key) => "$key: $value")->join(', ') : null;
                 }),
             ])
             ->filters([

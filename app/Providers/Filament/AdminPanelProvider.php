@@ -2,28 +2,30 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Pages\Dashboard;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use App\Filament\Pages\Tenancy\RegisterTeam;
 use App\Models\Team;
-use Filament\Pages;
+use Filament\Facades\Filament;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationItem;
+use Filament\Pages\Dashboard;
 use Filament\Panel;
-use Filament\Widgets;
-use Filament\Tables\Table;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\Column;
-use Filament\Http\Middleware\Authenticate;
-use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Filament\Http\Middleware\AuthenticateSession;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Http\Middleware\DisableBladeIconComponents;
-use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Filament\Tables\Table;
+use Filament\View\PanelsRenderHook;
+use Filament\Widgets\AccountWidget;
+use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -39,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
                 ->disabledClick();
         });
     }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -73,12 +76,19 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->navigationItems([
+                NavigationItem::make('public-page')
+                    ->label(fn (): string => __('My public page'))
+                    ->icon('heroicon-o-globe-alt')
+                    ->url(fn (): string => route('raffles.index', Filament::getTenant()), shouldOpenInNewTab: true)
+                    ->sort(100),
+            ])
             ->tenant(Team::class, 'slug')
             ->tenantRegistration(RegisterTeam::class)
             ->sidebarCollapsibleOnDesktop()
             ->renderHook(
-                \Filament\View\PanelsRenderHook::HEAD_END,
-                fn (): string => \Illuminate\Support\Facades\Blade::render('
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render('
                     <style>
                         .fi-topbar {
                             background-color: #f9fafb !important; /* tailwind gray-50 */

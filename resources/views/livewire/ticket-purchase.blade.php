@@ -160,7 +160,7 @@
                     {{ __('Remove all') }}
                 </button>
             </div>
-            <ul class="mt-2 flex flex-wrap gap-2">
+            <ul class="mt-2 flex flex-wrap gap-2" wire:ignore>
                 <template x-for="number in sortedSelection" x-bind:key="number">
                     <li class="number-chip">
                         <span x-text="number"></span>

@@ -3,12 +3,16 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\PaymentResource\Pages\EditPayment;
+use App\Filament\Resources\PaymentResource\Pages\ListPayments;
 use App\Models\Payment;
 use App\Models\Raffle;
 use App\Models\Team;
+use App\Models\Ticket;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -48,6 +52,40 @@ class PaymentResourceTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertSame(3000, $payment->refresh()->amount);
+    }
+
+    public function test_the_list_shows_the_numbers_reserved_by_each_payment(): void
+    {
+        $payment = $this->createPayment();
+        foreach (['07', '42'] as $number) {
+            Ticket::factory()->create([
+                'raffle_id' => $payment->raffle_id,
+                'customer_id' => $payment->customer_id,
+                'payment_id' => $payment->id,
+                'number' => $number,
+            ]);
+        }
+
+        Livewire::test(ListPayments::class)
+            ->assertCanSeeTableRecords([$payment])
+            ->assertTableColumnStateSet('tickets.number', ['07', '42'], $payment);
+    }
+
+    public function test_a_new_proof_image_stays_on_the_private_disk(): void
+    {
+        Storage::fake('public');
+        Storage::fake('local');
+        $payment = $this->createPayment();
+
+        Livewire::test(EditPayment::class, ['record' => $payment->getRouteKey()])
+            ->fillForm(['img' => [UploadedFile::fake()->image('capture.jpg')]])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $path = $payment->refresh()->img;
+
+        Storage::disk('local')->assertExists($path);
+        Storage::disk('public')->assertMissing($path);
     }
 
     /**

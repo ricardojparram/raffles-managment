@@ -9,6 +9,7 @@ use App\Filament\Resources\RaffleResource\Pages\EditRaffle;
 use App\Filament\Resources\RaffleResource\Pages\ListRaffles;
 use App\Filament\Schemas\Components\MoneyInput;
 use App\Models\Raffle;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -34,6 +35,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Guava\FilamentIconSelectColumn\Tables\Columns\IconSelectColumn;
+use Illuminate\Support\Js;
 use Illuminate\Support\Str;
 
 class RaffleResource extends Resource
@@ -105,12 +107,30 @@ class RaffleResource extends Resource
 
                                     return trim(($flags[$c] ?? '').' '.$c.' '.($symbols[$c] ?? ''));
                                 }),
+                            TextInput::make('ticket_amount')
+                                ->label(__('Ticket amount'))
+                                ->helperText(__('Numbers start at 00. This cannot change once a number is taken.'))
+                                ->integer()
+                                ->required()
+                                ->minValue(2)
+                                ->maxValue(100000)
+                                ->default(100)
+                                ->disabled(fn (?Raffle $record): bool => (bool) $record?->tickets()->exists()),
+                            TextInput::make('minimum_tickets')
+                                ->label(__('Minimum tickets per purchase'))
+                                ->integer()
+                                ->required()
+                                ->minValue(1)
+                                ->lte('ticket_amount')
+                                ->default(1),
 
                             FileUpload::make('img')
                                 ->required()
                                 ->label(__('Image'))
                                 ->image()
                                 ->imageEditor()
+                                ->disk('public')
+                                ->visibility('public')
                                 ->directory(fn () => 'tenant-'.Filament::getTenant()->id.'/raffles')
                                 ->columnSpanFull(),
                             RichEditor::make('description')
@@ -150,6 +170,8 @@ class RaffleResource extends Resource
                                         ->label(__('Image'))
                                         ->image()
                                         ->imageEditor()
+                                        ->disk('public')
+                                        ->visibility('public')
                                         ->directory(fn () => 'tenant-'.Filament::getTenant()->id.'/prizes'),
                                 ]),
                         ]),
@@ -187,6 +209,7 @@ class RaffleResource extends Resource
             ->columns([
                 ImageColumn::make('img')
                     ->label(__('Image'))
+                    ->disk('public')
                     ->size(50),
                 TextColumn::make('title')->label(__('Raffle Details'))->searchable()->sortable()->description(function ($record) {
                     return Str::words(strip_tags($record->description), 8, '...');
@@ -212,6 +235,22 @@ class RaffleResource extends Resource
                 //
             ])
             ->recordActions([
+                Action::make('publicPage')
+                    ->label(__('Public page'))
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->color('gray')
+                    ->url(fn (Raffle $record): string => $record->publicUrl(), shouldOpenInNewTab: true)
+                    ->visible(fn (Raffle $record): bool => $record->status !== Status::Pending->value),
+                Action::make('copyPublicLink')
+                    ->label(__('Copy link'))
+                    ->icon('heroicon-o-link')
+                    ->color('gray')
+                    ->alpineClickHandler(fn (Raffle $record): string => sprintf(
+                        'window.navigator.clipboard.writeText(%s); $tooltip(%s, { timeout: 1500 })',
+                        Js::from($record->publicUrl()),
+                        Js::from(__('Link copied')),
+                    ))
+                    ->visible(fn (Raffle $record): bool => $record->status !== Status::Pending->value),
                 EditAction::make(),
                 ViewAction::make()->modalWidth(Width::ScreenExtraLarge),
             ])

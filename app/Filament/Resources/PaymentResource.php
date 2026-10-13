@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Actions\ReserveTickets;
 use App\Enums\PaymentStatus;
 use App\Filament\Resources\PaymentResource\Pages\CreatePayment;
 use App\Filament\Resources\PaymentResource\Pages\EditPayment;
@@ -118,6 +119,8 @@ class PaymentResource extends Resource
                                 ->label(__('Image'))
                                 ->image()
                                 ->imageEditor()
+                                ->disk(ReserveTickets::PROOF_DISK)
+                                ->visibility('private')
                                 ->directory(fn () => 'tenant-'.Filament::getTenant()->id.'/payments')
                                 ->columnSpanFull(),
                         ]),
@@ -188,6 +191,10 @@ class PaymentResource extends Resource
                     ->label(__('Amount'))
                     ->currency(fn ($record) => $record->currency ?? 'USD'),
                 TextColumn::make('reference')->sortable()->searchable()->label(__('Reference')),
+                TextColumn::make('tickets.number')
+                    ->label(__('Tickets'))
+                    ->badge()
+                    ->limitList(6),
                 IconSelectColumn::make('status')
                     ->options(PaymentStatus::class)
                     ->size(IconSize::Large),
@@ -213,7 +220,7 @@ class PaymentResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['raffle', 'customer', 'paymentMethod']);
+        return parent::getEloquentQuery()->with(['raffle', 'customer', 'paymentMethod', 'tickets']);
     }
 
     public static function getRelations(): array

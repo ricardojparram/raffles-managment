@@ -184,5 +184,11 @@
     "Details": "Detalles",
     "Show less": "Ver menos",
     "Read more": "Leer más",
-    "Ways to pay": "Formas de pago"
+    "Ways to pay": "Formas de pago",
+    "Numbers start at 00. This cannot change once a number is taken.": "Los números empiezan en 00. No se puede cambiar cuando ya hay números vendidos.",
+    "Minimum tickets per purchase": "Mínimo de tickets por compra",
+    "Public page": "Página pública",
+    "Copy link": "Copiar enlace",
+    "My public page": "Mi página pública",
+    "Tickets": "Tickets"
 }
