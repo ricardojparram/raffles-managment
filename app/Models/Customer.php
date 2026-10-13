@@ -29,6 +29,11 @@ class Customer extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function getFullnameAttribute(): string
+    {
+        return trim("{$this->name} {$this->lastname}");
+    }
+
     /**
      * Normalize a phone to E.164, or null when it is not a number we can reach.
      *

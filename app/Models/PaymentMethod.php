@@ -13,6 +13,7 @@ class PaymentMethod extends Model
     use HasFactory;
 
     protected $fillable = [
+        'team_id',
         'title',
         'description',
         'currency',

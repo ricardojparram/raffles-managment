@@ -12,6 +12,7 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Raffle;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -21,6 +22,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -29,8 +31,8 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\IconSize;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Guava\FilamentIconSelectColumn\Tables\Columns\IconSelectColumn;
 use Illuminate\Database\Eloquent\Builder;
 
 class PaymentResource extends Resource
@@ -195,9 +197,19 @@ class PaymentResource extends Resource
                     ->label(__('Tickets'))
                     ->badge()
                     ->limitList(6),
-                IconSelectColumn::make('status')
-                    ->options(PaymentStatus::class)
-                    ->size(IconSize::Large),
+                TextColumn::make('status')
+                    ->label(__('Status'))
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        Payment::CONFIRMED_STATUS => 'success',
+                        Payment::REJECTED_STATUS => 'danger',
+                        default => 'warning',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        Payment::CONFIRMED_STATUS => __('Confirmed'),
+                        Payment::REJECTED_STATUS => __('Rejected'),
+                        default => __('Pending'),
+                    }),
 
                 TextColumn::make('payment_date')
                     ->since()
@@ -206,9 +218,60 @@ class PaymentResource extends Resource
                     ->label(__('Payment Date')),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->label(__('Status'))
+                    ->options(Payment::statusOptions()),
+                SelectFilter::make('raffle_id')
+                    ->relationship('raffle', 'title')
+                    ->label(__('Raffle')),
             ])
             ->recordActions([
+                Action::make('confirm')
+                    ->label(__('Confirm'))
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Confirm Payment'))
+                    ->modalDescription(__('Are you sure you want to confirm this payment?'))
+                    ->visible(fn (Payment $record): bool => $record->status === Payment::PENDING_STATUS && (auth()->user()?->can('update', $record) ?? false))
+                    ->action(function (Payment $record) {
+                        $record->confirm(auth()->user());
+                        Notification::make()
+                            ->title(__('Payment confirmed successfully'))
+                            ->success()
+                            ->send();
+                    }),
+
+                Action::make('reject')
+                    ->label(__('Reject'))
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Reject Payment'))
+                    ->modalDescription(__('Are you sure you want to reject this payment? Reserved tickets will be released.'))
+                    ->visible(fn (Payment $record): bool => $record->status === Payment::PENDING_STATUS && (auth()->user()?->can('update', $record) ?? false))
+                    ->action(function (Payment $record) {
+                        $record->reject(auth()->user());
+                        Notification::make()
+                            ->title(__('Payment rejected and tickets released'))
+                            ->warning()
+                            ->send();
+                    }),
+
+                Action::make('whatsapp')
+                    ->label(__('WhatsApp'))
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->visible(fn (Payment $record): bool => $record->status === Payment::CONFIRMED_STATUS && filled($record->customer?->phone))
+                    ->url(function (Payment $record): string {
+                        $phone = preg_replace('/\D+/', '', $record->customer->phone ?? '');
+                        $tickets = $record->tickets->pluck('number')->implode(', ');
+                        $raffleTitle = $record->raffle?->title ?? '';
+                        $checkerUrl = route('raffles.show', ['team' => Filament::getTenant() ?? $record->team, 'raffle' => $record->raffle]);
+                        $message = "Hola {$record->customer?->name}! Tu pago para la rifa '{$raffleTitle}' fue confirmado. Tus números asignados son: {$tickets}. Consulta tus boletos acá: {$checkerUrl}";
+                        return "https://wa.me/{$phone}?text=" . urlencode($message);
+                    }, shouldOpenInNewTab: true),
+
                 EditAction::make(),
             ])
             ->toolbarActions([

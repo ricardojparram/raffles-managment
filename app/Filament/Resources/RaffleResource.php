@@ -27,7 +27,12 @@ use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use App\Models\Customer;
+use App\Models\Payment;
+use App\Models\PaymentMethod;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\IconSize;
@@ -35,7 +40,7 @@ use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Guava\FilamentIconSelectColumn\Tables\Columns\IconSelectColumn;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Js;
 use Illuminate\Support\Str;
 
@@ -229,15 +234,116 @@ class RaffleResource extends Resource
                     ->searchable()
                     ->currency(fn ($record) => $record->currency ?? 'USD')
                     ->limit(50),
-                IconSelectColumn::make('status')
-                    ->options(Status::class)
-                    ->size(IconSize::Large),
+                TextColumn::make('status')
+                    ->label(__('Status'))
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        Status::Active->value => 'success',
+                        Status::Finished->value => 'gray',
+                        Status::Canceled->value => 'danger',
+                        default => 'warning',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        Status::Active->value => __('Active'),
+                        Status::Finished->value => __('Finished'),
+                        Status::Canceled->value => __('Canceled'),
+                        default => __('Draft'),
+                    }),
 
             ])
             ->filters([
                 //
             ])
             ->recordActions([
+                Action::make('registerSale')
+                    ->label(__('Register Sale'))
+                    ->icon('heroicon-o-ticket')
+                    ->color('success')
+                    ->visible(fn (Raffle $record): bool => (auth()->user()?->canSellFor(Filament::getTenant()) ?? false) && $record->salesStatus()->isOpen())
+                    ->form([
+                        Select::make('customer_id')
+                            ->label(__('Customer'))
+                            ->options(fn () => Filament::getTenant()?->customers()->pluck('name', 'id') ?? [])
+                            ->getOptionLabelFromRecordUsing(fn (Customer $record) => "{$record->dni} - {$record->fullname}")
+                            ->searchable()
+                            ->required()
+                            ->createOptionForm([
+                                TextInput::make('dni')->label(__('Identity Card'))->required()->maxLength(255),
+                                TextInput::make('name')->label(__('Name'))->required()->maxLength(255),
+                                TextInput::make('lastname')->label(__('Last Name'))->required()->maxLength(255),
+                                TextInput::make('phone')->label(__('Phone'))->required()->tel()->maxLength(255),
+                            ])
+                            ->createOptionUsing(function (array $data) {
+                                return Filament::getTenant()->customers()->create($data)->id;
+                            }),
+                        Select::make('payment_method_id')
+                            ->label(__('Payment Method'))
+                            ->options(fn () => Filament::getTenant()?->paymentMethods()->pluck('title', 'id') ?? [])
+                            ->required(),
+                        TextInput::make('quantity')
+                            ->label(__('Ticket Quantity'))
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(1)
+                            ->maxValue(fn (Raffle $record) => max(1, $record->availableTicketsCount()))
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, Raffle $record, $state) {
+                                if ($state && is_numeric($state)) {
+                                    $set('amount', $record->priceForQuantity((int) $state));
+                                }
+                            }),
+                        TextInput::make('amount')
+                            ->label(__('Amount in cents'))
+                            ->numeric()
+                            ->default(fn (Raffle $record) => $record->ticket_price)
+                            ->required(),
+                        TextInput::make('reference')
+                            ->label(__('Reference'))
+                            ->placeholder(__('Cash / POS / Reference number'))
+                            ->default('Venta manual')
+                            ->maxLength(255),
+                    ])
+                    ->action(function (array $data, Raffle $record) {
+                        $quantity = (int) $data['quantity'];
+                        $numbers = $record->randomAvailableNumbers($quantity);
+
+                        if (count($numbers) < $quantity) {
+                            Notification::make()
+                                ->title(__('Not enough tickets available'))
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        DB::transaction(function () use ($data, $record, $numbers) {
+                            $payment = Payment::create([
+                                'team_id' => $record->team_id,
+                                'customer_id' => $data['customer_id'],
+                                'raffle_id' => $record->id,
+                                'payment_method_id' => $data['payment_method_id'],
+                                'amount' => (int) $data['amount'],
+                                'currency' => $record->currency,
+                                'status' => Payment::CONFIRMED_STATUS,
+                                'reviewed_by' => auth()->id(),
+                                'reviewed_at' => now(),
+                                'payment_date' => now(),
+                                'reference' => $data['reference'] ?? 'Venta manual',
+                            ]);
+
+                            $payment->tickets()->createMany(array_map(fn ($num) => [
+                                'raffle_id' => $record->id,
+                                'customer_id' => $data['customer_id'],
+                                'number' => $num,
+                            ], $numbers));
+                        });
+
+                        Notification::make()
+                            ->title(__('Sale registered successfully'))
+                            ->body(__('Assigned numbers: :numbers', ['numbers' => implode(', ', $numbers)]))
+                            ->success()
+                            ->send();
+                    }),
                 EditAction::make(),
                 ViewAction::make()->modalWidth(Width::ScreenExtraLarge),
                 ActionGroup::make([

@@ -39,6 +39,7 @@ class Raffle extends Model
         'description',
         'ticket_amount',
         'minimum_tickets',
+        'status',
     ];
 
     protected $casts = [

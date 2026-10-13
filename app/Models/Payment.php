@@ -18,6 +18,8 @@ class Payment extends Model
         'amount',
         'currency',
         'status',
+        'reviewed_by',
+        'reviewed_at',
         'payment_date',
         'raffle_id',
         'payment_method_id',
@@ -29,8 +31,32 @@ class Payment extends Model
     protected $casts = [
         'amount' => 'integer',
         'payment_date' => 'datetime',
+        'reviewed_at' => 'datetime',
         'exchange_rate' => 'float',
     ];
+
+    public function confirm(User $reviewer): void
+    {
+        $this->update([
+            'status' => self::CONFIRMED_STATUS,
+            'reviewed_by' => $reviewer->id,
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    public function reject(User $reviewer): void
+    {
+        $this->update([
+            'status' => self::REJECTED_STATUS,
+            'reviewed_by' => $reviewer->id,
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
 
     protected static function booted(): void
     {
