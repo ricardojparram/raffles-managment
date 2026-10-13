@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'exchange_rate' => [
+        'url' => env('EXCHANGE_RATE_URL', 'https://ve.dolarapi.com/v1/dolares/oficial'),
+    ],
+
 ];

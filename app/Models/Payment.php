@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTeam;
-use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payment extends Model
 {
-    use HasFactory;
     use BelongsToTeam;
+    use HasFactory;
 
     protected $fillable = [
         'team_id',
@@ -22,16 +22,29 @@ class Payment extends Model
         'raffle_id',
         'payment_method_id',
         'reference',
-        'img'
+        'img',
+        'exchange_rate',
     ];
 
     protected $casts = [
         'amount' => 'integer',
-        'payment_date' => 'datetime'
+        'payment_date' => 'datetime',
+        'exchange_rate' => 'float',
     ];
 
+    protected static function booted(): void
+    {
+        static::updated(function (Payment $payment): void {
+            if ($payment->wasChanged('status') && $payment->status === self::REJECTED_STATUS) {
+                $payment->tickets()->delete();
+            }
+        });
+    }
+
     public const PENDING_STATUS = 'pending';
+
     public const CONFIRMED_STATUS = 'confirmed';
+
     public const REJECTED_STATUS = 'rejected';
 
     public static function statusOptions()
@@ -56,5 +69,10 @@ class Payment extends Model
     public function paymentMethod()
     {
         return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+    }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
     }
 }
