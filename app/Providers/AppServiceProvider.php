@@ -33,5 +33,11 @@ class AppServiceProvider extends ServiceProvider
         FilamentAsset::register([
             Css::make('custom-styles', public_path('css/custom.css')),
         ]);
+
+        \App\Models\Role::observe(\App\Observers\RoleObserver::class);
+        \App\Models\User::observe(\App\Observers\UserObserver::class);
+        \App\Models\Raffle::observe(\App\Observers\RaffleObserver::class);
+        \App\Models\Customer::observe(\App\Observers\CustomerObserver::class);
+        \App\Models\TeamUser::observe(\App\Observers\TeamMemberObserver::class);
     }
 }
