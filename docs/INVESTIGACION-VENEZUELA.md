@@ -1,6 +1,6 @@
 # Investigación para lanzar en Venezuela
 
-Investigación web hecha el 13 de octubre de 2026 en seis frentes. Este archivo es la síntesis y la recomendación. Las notas completas, con cada fuente, están en [investigacion/notas/](investigacion/notas/).
+Investigación web hecha el 13 de octubre de 2026 en seis frentes. Este archivo es la síntesis y la recomendación. El [informe completo](investigacion/INFORME-COMPLETO.md) reúne los 71 puntos investigados con sus fuentes en un solo documento. Las notas originales de cada frente están en [investigacion/notas/](investigacion/notas/).
 
 **Límites de esta investigación.** Se cortó por tiempo y el cupo de búsquedas se agotó a mitad de camino. No se pudo leer el texto oficial de la providencia de CONALOT: su contenido viene de prensa, de formularios archivados de CONALOT y del blog de un proveedor de software de rifas. Varias cifras salen solo del resumen de un buscador y están marcadas así en las notas. Nada de esto es asesoría legal.
 
