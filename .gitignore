@@ -25,3 +25,5 @@ yarn-error.log
 /public/css/filament
 /public/js/filament
 /.codegraph
+/research_notes
+/reports

@@ -12,6 +12,8 @@ Las referencias como S1 o D4 apuntan a [HALLAZGOS-TECNICOS.md](HALLAZGOS-TECNICO
 
 ## Orden recomendado
 
+> **Antes de todo lo demás:** resolver la pregunta regulatoria descrita en [INVESTIGACION-VENEZUELA.md](INVESTIGACION-VENEZUELA.md). De ella depende si el producto se lanza solo, homologado o aliado a una plataforma homologada. Los cambios de producto de la sección 8 de ese documento pasan a ser parte de la fase 0.
+
 1. **Fase 0.** Sin esto no se puede dar acceso a un organizador real.
 2. **Fase 1.** Con esto un organizador puede llevar una rifa completa de principio a fin.
 3. Probar con tres organizadores reales. Ver [NEGOCIO.md](NEGOCIO.md#6-salida-al-mercado).

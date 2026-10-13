@@ -1,5 +1,7 @@
 # Negocio
 
+> **Actualización del 13 de octubre de 2026.** Después de escribir este documento se hizo una investigación web. Su resultado está en [INVESTIGACION-VENEZUELA.md](INVESTIGACION-VENEZUELA.md) y corrige varias partes de este archivo, sobre todo la sección 7: las rifas y el software de rifas están regulados por CONALOT desde octubre de 2025, hay plataformas homologadas y hubo detenciones en 2026. Donde ambos documentos difieran, vale la investigación.
+
 **Aviso sobre este documento.** Lo técnico de esta carpeta está comprobado. Lo de este archivo no: es análisis razonado a partir del código, de lo que dijo el dueño y de conocimiento general del mercado venezolano. No se investigó competencia, precios de mercado ni legislación vigente. Cada sección dice qué habría que validar. Tratarlo como un punto de partida para hablar con organizadores reales, no como una conclusión.
 
 ## 1. Diagnóstico
