@@ -83,4 +83,49 @@ class User extends Authenticatable implements FilamentUser, HasTenants
             ? $this->teams()->find(session('current_team_id'))
             : $this->teams()->first();
     }
+
+    public function roleIn(?Team $team = null): ?\App\Enums\TeamRole
+    {
+        $team = $team ?? \Filament\Facades\Filament::getTenant() ?? $this->currentTeam();
+        if (! $team) {
+            return null;
+        }
+
+        $pivot = $this->teams()->where('teams.id', $team->id)->first()?->pivot;
+        if (! $pivot || ! $pivot->role) {
+            return null;
+        }
+
+        return \App\Enums\TeamRole::fromString($pivot->role);
+    }
+
+    public function isOwnerOf(?Team $team = null): bool
+    {
+        return $this->roleIn($team)?->isOwner() ?? false;
+    }
+
+    public function isAdminOf(?Team $team = null): bool
+    {
+        return $this->roleIn($team)?->isAdmin() ?? false;
+    }
+
+    public function isSellerOf(?Team $team = null): bool
+    {
+        return $this->roleIn($team) === \App\Enums\TeamRole::SELLER;
+    }
+
+    public function canManageRafflesOf(?Team $team = null): bool
+    {
+        return $this->roleIn($team)?->canManageRaffles() ?? false;
+    }
+
+    public function canManagePaymentsOf(?Team $team = null): bool
+    {
+        return $this->roleIn($team)?->canManagePayments() ?? false;
+    }
+
+    public function canSellFor(?Team $team = null): bool
+    {
+        return $this->roleIn($team)?->canSell() ?? false;
+    }
 }

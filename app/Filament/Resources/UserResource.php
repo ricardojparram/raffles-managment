@@ -70,6 +70,18 @@ class UserResource extends Resource
                             ->dehydrated(fn (?string $state) => filled($state))
                             ->maxLength(255)
                             ->label(__('Password')),
+                        \Filament\Forms\Components\Select::make('team_role')
+                            ->label(__('Role'))
+                            ->options([
+                                \App\Enums\TeamRole::ADMIN->value => \App\Enums\TeamRole::ADMIN->label(),
+                                \App\Enums\TeamRole::SELLER->value => \App\Enums\TeamRole::SELLER->label(),
+                                \App\Enums\TeamRole::VIEWER->value => \App\Enums\TeamRole::VIEWER->label(),
+                            ])
+                            ->default(\App\Enums\TeamRole::SELLER->value)
+                            ->required()
+                            ->dehydrated(false)
+                            ->disabled(fn (?User $record): bool => $record?->isOwnerOf() ?? false)
+                            ->formatStateUsing(fn (?User $record): ?string => $record?->roleIn()?->value ?? \App\Enums\TeamRole::SELLER->value),
                     ])
                     ->columns(2),
             ]);
@@ -81,6 +93,16 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('name')->sortable()->searchable()->label(__('Name')),
                 TextColumn::make('email')->sortable()->searchable()->label(__('Email')),
+                TextColumn::make('role')
+                    ->label(__('Role'))
+                    ->state(fn (User $record): string => $record->roleIn()?->label() ?? __('None'))
+                    ->badge()
+                    ->color(fn (User $record): string => match ($record->roleIn()) {
+                        \App\Enums\TeamRole::OWNER => 'danger',
+                        \App\Enums\TeamRole::ADMIN => 'warning',
+                        \App\Enums\TeamRole::SELLER => 'success',
+                        default => 'gray',
+                    }),
             ])
             ->filters([
                 //

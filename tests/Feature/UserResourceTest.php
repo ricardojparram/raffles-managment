@@ -62,6 +62,7 @@ class UserResourceTest extends TestCase
     public function test_can_edit_user_without_password(): void
     {
         $user = User::factory()->create();
+        $user->teams()->attach($this->team, ['role' => 'seller']);
 
         Livewire::test(UserResource\Pages\EditUser::class, [
             'record' => $user->getRouteKey(),

@@ -12,6 +12,7 @@ class Customer extends Model
     use HasFactory;
 
     protected $fillable = [
+        'team_id',
         'dni',
         'name',
         'lastname',

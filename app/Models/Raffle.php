@@ -30,6 +30,7 @@ class Raffle extends Model
     public const NUMBERS_PER_PAGE = 100;
 
     protected $fillable = [
+        'team_id',
         'title',
         'date',
         'img',
