@@ -20,7 +20,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
-    // use HasRoles;
+    use \Spatie\Permission\Traits\HasRoles {
+        hasRole as traitHasRole;
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +33,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         'name',
         'email',
         'password',
+        'status',
     ];
 
     /**
@@ -59,6 +62,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class)
+            ->using(TeamUser::class)
             ->withPivot('role')
             ->withTimestamps();
     }
@@ -75,8 +79,46 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     public function canAccessPanel(Panel $panel): bool
     {
+        if ($panel->getId() === 'superadmin') {
+            return $this->hasRole('super_admin');
+        }
+
+        if ($panel->getId() === 'admin') {
+            return ! $this->hasRole('super_admin');
+        }
+
         return true;
     }
+
+    public function canImpersonate(): bool
+    {
+        return $this->hasRole('super_admin');
+    }
+
+    public function canBeImpersonated(): bool
+    {
+        return ! $this->hasRole('super_admin');
+    }
+
+    public function hasRole($roles, string|null $guard = null): bool
+    {
+        if (is_string($roles) && $roles === 'super_admin') {
+            $hasGlobal = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                ->where('model_has_roles.model_id', $this->getKey())
+                ->where('model_has_roles.model_type', get_class($this))
+                ->where('roles.name', 'super_admin')
+                ->whereNull('model_has_roles.team_id')
+                ->exists();
+
+            if ($hasGlobal) {
+                return true;
+            }
+        }
+
+        return $this->traitHasRole($roles, $guard);
+    }
+
     public function currentTeam()
     {
         return session('current_team_id')

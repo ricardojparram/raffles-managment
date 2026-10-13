@@ -23,6 +23,41 @@ class UserResourceTest extends TestCase
         $this->team = Team::create(['name' => 'Test Team']);
         $this->user->teams()->attach($this->team, ['role' => 'admin']);
         
+        \Spatie\Permission\Models\Role::create(['name' => 'admin', 'team_id' => null])
+            ->syncPermissions([
+                \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'ViewAny:User']),
+                \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'View:User']),
+                \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'Create:User']),
+                \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'Update:User']),
+                \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'Delete:User']),
+            ]);
+        
+        // Asignar el rol de spatie
+        setPermissionsTeamId($this->team->id);
+        $this->user->assignRole('admin');
+        
+        // Subscribe the team so feature limits work
+        $plan = \Revoltify\Subscriptionify\Models\Plan::create([
+            'name' => 'Pro Plan',
+            'slug' => 'pro',
+            'price' => 10.00,
+            'signup_fee' => 0.00,
+            'invoice_period' => 1,
+            'invoice_interval' => 'month',
+            'trial_period' => 0,
+            'trial_interval' => 'day',
+            'is_active' => true,
+        ]);
+        $plan->features()->create([
+            'name' => 'Team Members',
+            'slug' => 'team_members',
+            'type' => 'limit',
+            'value' => '10',
+            'resettable_period' => 1,
+            'resettable_interval' => 'month',
+        ]);
+        $this->team->subscribe($plan);
+        
         // Ensure tenant is set for Filament panel if using tenancy
         $this->actingAs($this->user);
         Filament::setTenant($this->team);
@@ -45,11 +80,14 @@ class UserResourceTest extends TestCase
         $userData = User::factory()->make()->toArray();
         $userData['password'] = 'password123';
 
-        Livewire::test(UserResource\Pages\CreateUser::class)
+        Livewire::test(UserResource\Pages\CreateUser::class, [
+            'tenant' => $this->team->slug,
+        ])
             ->fillForm([
                 'name' => $userData['name'],
                 'email' => $userData['email'],
                 'password' => $userData['password'],
+                'team_role' => 'admin',
             ])
             ->call('create')
             ->assertHasNoFormErrors();
@@ -64,11 +102,13 @@ class UserResourceTest extends TestCase
         $user = User::factory()->create();
 
         Livewire::test(UserResource\Pages\EditUser::class, [
+            'tenant' => $this->team->slug,
             'record' => $user->getRouteKey(),
         ])
             ->fillForm([
                 'name' => 'Updated Name',
                 'email' => $user->email,
+                'team_role' => 'admin',
                 // Omit password
             ])
             ->call('save')

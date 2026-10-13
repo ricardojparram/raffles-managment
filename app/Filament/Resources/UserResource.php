@@ -2,28 +2,27 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Filament\Resources\UserResource\Pages\EditUser;
-use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
+use App\Filament\Resources\UserResource\Pages\ListUsers;
+use App\Models\Role;
 use App\Models\User;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Facades\Filament;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
 {
+    use \App\Filament\Traits\EnforcesFeatureLimit;
+
     protected static ?string $model = User::class;
 
     protected static ?string $slug = 'users';
@@ -43,8 +42,14 @@ class UserResource extends Resource
         return __('Users');
     }
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
+
     protected static ?string $tenantOwnershipRelationshipName = 'teams';
+
+    public static function canCreate(): bool
+    {
+        return static::checkFeatureLimit('team_members');
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -70,6 +75,36 @@ class UserResource extends Resource
                             ->dehydrated(fn (?string $state) => filled($state))
                             ->maxLength(255)
                             ->label(__('Password')),
+                        Select::make('team_role')
+                            ->label(__('Role'))
+                            ->options(fn () => Role::whereNull('team_id')
+                                ->where('name', '!=', 'super_admin')
+                                ->pluck('name', 'name')
+                                ->mapWithKeys(fn ($name, $key) => [$key => ucfirst($name)])
+                            )
+                            ->required()
+                            ->default('seller')
+                            ->afterStateHydrated(function (Select $component, ?User $record) {
+                                if ($record) {
+                                    $tenant = Filament::getTenant();
+                                    if ($tenant) {
+                                        setPermissionsTeamId($tenant->id);
+                                        $role = $record->roles->first();
+                                        $component->state($role?->name);
+                                    }
+                                }
+                            })
+                            ->dehydrated(false)
+                            ->saveRelationshipsUsing(function (User $record, $state) {
+                                $tenant = Filament::getTenant();
+                                if ($tenant && $state) {
+                                    setPermissionsTeamId($tenant->id);
+                                    // The tenant association is automatically handled by Filament's CreateRecord/EditRecord,
+                                    // but we can ensure it here just to be safe.
+                                    $record->teams()->syncWithoutDetaching([$tenant->id]);
+                                    $record->syncRoles([$state]);
+                                }
+                            }),
                     ])
                     ->columns(2),
             ]);
@@ -81,6 +116,10 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('name')->sortable()->searchable()->label(__('Name')),
                 TextColumn::make('email')->sortable()->searchable()->label(__('Email')),
+                TextColumn::make('roles.name')
+                    ->label(__('Role'))
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
             ])
             ->filters([
                 //
