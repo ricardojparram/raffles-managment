@@ -14,6 +14,7 @@ use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -38,11 +39,13 @@ class TicketPurchase extends Component
     private const ATTEMPTS_DECAY_SECONDS = 600;
 
     /**
-     * State kept in the session so a reload, common when switching to the bank app, loses nothing.
+     * State remembered per visitor so a reload, common when switching to the bank app, loses nothing.
      */
     private const REMEMBERED = ['selected', 'step', 'dni', 'name', 'lastname', 'phone', 'paymentMethodId', 'reference'];
 
     private const REMEMBERED_AFTER_PURCHASE = ['dni', 'name', 'lastname', 'phone', 'paymentMethodId'];
+
+    private const REMEMBERED_FOR_MINUTES = 120;
 
     #[Locked]
     public Raffle $raffle;
@@ -87,7 +90,7 @@ class TicketPurchase extends Component
 
     public function mount(): void
     {
-        $this->fill(Arr::only(session($this->sessionKey(), []), self::REMEMBERED));
+        $this->fill(Arr::only(Cache::get($this->memoryKey(), []), self::REMEMBERED));
 
         if ($this->step === 'pay') {
             $this->step = 'pick';
@@ -97,9 +100,11 @@ class TicketPurchase extends Component
 
     public function dehydrate(): void
     {
-        session()->put($this->sessionKey(), $this->only(
-            $this->step === 'done' ? self::REMEMBERED_AFTER_PURCHASE : self::REMEMBERED,
-        ));
+        Cache::put(
+            $this->memoryKey(),
+            $this->only($this->step === 'done' ? self::REMEMBERED_AFTER_PURCHASE : self::REMEMBERED),
+            now()->addMinutes(self::REMEMBERED_FOR_MINUTES),
+        );
     }
 
     /**
@@ -530,8 +535,13 @@ class TicketPurchase extends Component
             ->find($this->paymentId);
     }
 
-    private function sessionKey(): string
+    /**
+     * Kept in the cache under the visitor's session id, not in the session payload: Laravel
+     * rewrites the whole payload on every request, so a slow parallel request (the capture
+     * upload) would otherwise save a stale copy over what the buyer typed meanwhile.
+     */
+    private function memoryKey(): string
     {
-        return "ticket-purchase.{$this->raffle->id}";
+        return 'ticket-purchase:'.session()->getId().":{$this->raffle->id}";
     }
 }
