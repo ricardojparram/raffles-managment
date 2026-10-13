@@ -16,6 +16,7 @@ class Customer extends Model
         'name',
         'lastname',
         'phone',
+        'email',
     ];
 
     public function tickets()

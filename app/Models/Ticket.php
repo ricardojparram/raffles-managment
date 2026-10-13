@@ -12,7 +12,9 @@ class Ticket extends Model
     protected $fillable = [
         'raffle_id',
         'customer_id',
-        'number'
+        'payment_id',
+        'number',
+        'status'
     ];
 
     public function raffles()
@@ -23,5 +25,10 @@ class Ticket extends Model
     public function customers()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class);
     }
 }

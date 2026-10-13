@@ -10,21 +10,39 @@ class Raffle extends Model
 {
     use HasFactory;
     use BelongsToTeam;
+    use \Spatie\Sluggable\HasSlug;
 
 
     protected $fillable = [
+        'team_id',
         'title',
+        'slug',
         'date',
         'img',
         'currency',
         'ticket_price',
-        'description'
+        'description',
+        'total_tickets'
     ];
 
     protected $casts = [
         'date' => 'datetime',
         'ticket_price' => 'integer'
     ];
+
+    public function getSlugOptions(): \Spatie\Sluggable\SlugOptions
+    {
+        return \Spatie\Sluggable\SlugOptions::create()
+            ->generateSlugsFrom('title')
+            ->saveSlugsTo('slug')
+            ->doNotGenerateSlugsOnUpdate()
+            ->slugsShouldBeNoLongerThan(50);
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
 
     public function tickets()
     {
