@@ -25,3 +25,7 @@ yarn-error.log
 /public/css/filament
 /public/js/filament
 /.codegraph
+
+# Test databases
+testing
+*.sqlite
