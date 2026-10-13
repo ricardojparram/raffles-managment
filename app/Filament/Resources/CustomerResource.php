@@ -25,6 +25,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CustomerResource extends Resource
 {
+    use \App\Filament\Traits\EnforcesFeatureLimit;
+
     protected static ?string $model = Customer::class;
 
     protected static ?string $slug = 'customers';
@@ -45,6 +47,11 @@ class CustomerResource extends Resource
     }
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+
+    public static function canCreate(): bool
+    {
+        return static::checkFeatureLimit('customers');
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -135,7 +135,7 @@ class PaymentResource extends Resource
                             ->required()
                             ->label(__('Payment Method'))
                             ->live()
-                            ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, $state) {
+                            ->afterStateUpdated(function (\Filament\Forms\Set $set, $state) {
                                 if ($state) {
                                     $pm = \App\Models\PaymentMethod::find($state);
                                     if ($pm) {
@@ -149,7 +149,7 @@ class PaymentResource extends Resource
                         TextInput::make('amount')
                             ->label(__('Amount'))
                             ->required()
-                            ->prefix(function (\Filament\Schemas\Components\Utilities\Get $get) {
+                            ->prefix(function (\Filament\Forms\Get $get) {
                                 $c = $get('currency') ?? 'USD';
                                 $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
                                 $symbols = ['USD' => '$', 'VED' => 'Bs.'];

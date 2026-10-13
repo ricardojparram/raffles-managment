@@ -37,6 +37,8 @@ use Filament\Facades\Filament;
 
 class RaffleResource extends Resource
 {
+    use \App\Filament\Traits\EnforcesFeatureLimit;
+
     protected static ?string $model = Raffle::class;
 
     protected static ?string $slug = 'raffles';
@@ -57,6 +59,11 @@ class RaffleResource extends Resource
     }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-gift';
+
+    public static function canCreate(): bool
+    {
+        return static::checkFeatureLimit('raffles_created');
+    }
 
 
     public static function form(Schema $schema): Schema
@@ -97,13 +104,19 @@ class RaffleResource extends Resource
                                 ->rules(['required'])
                                 ->markAsRequired()
                                 ->label(__('Ticket Price'))
-                                ->prefix(function (\Filament\Schemas\Components\Utilities\Get $get) {
+                                ->prefix(function (\Filament\Forms\Get $get) {
                                     $c = $get('currency') ?? 'USD';
                                     $flags = ['USD' => '🇺🇸', 'VED' => '🇻🇪'];
                                     $symbols = ['USD' => '$', 'VED' => 'Bs.'];
                                     return trim(($flags[$c] ?? '') . ' ' . $c . ' ' . ($symbols[$c] ?? ''));
                                 })
                                 ->currencyMask(',', '.', 2),
+                            TextInput::make('total_tickets')
+                                ->label(__('Total Tickets'))
+                                ->numeric()
+                                ->default(100)
+                                ->minValue(1)
+                                ->required(),
 
                             FileUpload::make('img')
                                 ->required()

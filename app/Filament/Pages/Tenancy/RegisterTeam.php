@@ -29,8 +29,13 @@ class RegisterTeam extends RegisterTenant
     {
         $team = Team::create($data);
 
+        $user = auth()->user();
         // Asignar usuario como admin del nuevo team
-        $team->users()->attach(auth()->user(), ['role' => 'admin']);
+        $team->users()->attach($user, ['role' => 'admin']);
+
+        // Asignar el rol de Spatie
+        setPermissionsTeamId($team->id);
+        $user->assignRole('admin');
 
         return $team;
     }

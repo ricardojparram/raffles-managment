@@ -5,7 +5,7 @@ namespace App\Providers\Filament;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
-use App\Filament\Pages\Tenancy\RegisterTeam;
+use App\Filament\Pages\Auth\Register;
 use App\Models\Team;
 use Filament\Pages;
 use Filament\Panel;
@@ -45,6 +45,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->colors([
                 'primary' => Color::Orange,
@@ -74,8 +75,18 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->tenant(Team::class, 'slug')
-            ->tenantRegistration(RegisterTeam::class)
+            // tenantRegistration removed — handled in custom Register wizard
+            ->tenantMiddleware([
+                \App\Http\Middleware\SyncSpatiePermissionsWithFilamentTenant::class,
+            ], isPersistent: true)
             ->sidebarCollapsibleOnDesktop()
+            ->plugins([
+                \DutchCodingCompany\FilamentDeveloperLogins\FilamentDeveloperLoginsPlugin::make()
+                    ->enabled(app()->environment('local'))
+                    ->users([
+                        'Admin' => 'admin@admin.com',
+                    ])
+            ])
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn (): string => \Illuminate\Support\Facades\Blade::render('
@@ -133,7 +144,7 @@ class AdminPanelProvider extends PanelProvider
                     </style>
                 ')
             )
-            ->registration();
+            ->registration(Register::class);
         // ->tenantProfile(\App\Filament\Pages\Tenancy\EditTeamProfile::class)
     }
 }
