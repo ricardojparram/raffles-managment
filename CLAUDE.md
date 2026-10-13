@@ -1,3 +1,11 @@
+# Raffles Management
+
+**Lee `docs/TRASPASO.md` antes de trabajar.** Tiene el estado actual, cómo levantar el entorno, las decisiones tomadas y las trampas conocidas. `docs/README.md` es el índice del resto.
+
+El bloque de abajo lo genera Laravel Boost y está desactualizado: el proyecto usa **Laravel 13, Filament 5, Livewire 4 y PHP 8.3 o superior**, no las versiones que ahí se listan. Se regenera con `php artisan boost:update`.
+
+Si tocas las páginas públicas, además de `php artisan test` corre `tests/Browser/run.sh behaviour`.
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
