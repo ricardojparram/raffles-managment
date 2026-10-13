@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Sluggable\HasSlug;
@@ -9,6 +10,7 @@ use Spatie\Sluggable\SlugOptions;
 
 class Team extends Model
 {
+    use HasFactory;
     use HasSlug;
 
     protected $fillable = ['name', 'slug'];
@@ -40,7 +42,6 @@ class Team extends Model
         return $this->hasMany(PaymentMethod::class);
     }
 
-
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
@@ -49,5 +50,4 @@ class Team extends Model
             ->doNotGenerateSlugsOnUpdate()
             ->slugsShouldBeNoLongerThan(50);
     }
-
 }
