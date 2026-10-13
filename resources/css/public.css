@@ -5,53 +5,62 @@
 @source '../views/livewire';
 @source '../js/public.js';
 
+/*
+ * Visual language: quiet and bank-like, because buyers are about to send money
+ * to someone they found on Instagram. White paper, cool greys, hairlines
+ * instead of shadows, and a single green reserved for the next step and for
+ * "confirmed". One self-hosted typeface (Manrope, SIL OFL, see resources/fonts).
+ */
+
+@font-face {
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url('../fonts/manrope-latin.woff2') format('woff2');
+}
+
 @theme {
-    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial,
-        sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans',
+        Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
 
-    --color-canvas: #f7f5f0;
+    --color-canvas: #ffffff;
     --color-surface: #ffffff;
-    --color-sunken: #efebe3;
-    --color-line: #e3ded3;
-    --color-ink: #1b1813;
-    --color-ink-soft: #57524a;
-    --color-ink-faint: #77726a;
-    --color-brand: #f97316;
-    --color-brand-strong: #ea580c;
-    --color-brand-soft: #ffedd5;
-    --color-brand-ink: #b93d0a;
-    --color-on-brand: #1b1813;
-    --color-success: #15803d;
-    --color-success-soft: #dcfce7;
-    --color-warning: #8a5a06;
-    --color-warning-soft: #fef3c7;
-    --color-danger: #b91c1c;
-    --color-danger-soft: #fee2e2;
+    --color-sunken: #f4f6f8;
+    --color-line: #e4e8ed;
+    --color-line-strong: #cbd2db;
+    --color-ink: #0f1720;
+    --color-ink-soft: #4a5563;
+    --color-ink-faint: #6b7684;
 
-    --shadow-card: 0 1px 2px rgb(27 24 19 / 0.04), 0 10px 28px -16px rgb(27 24 19 / 0.16);
-    --shadow-bar: 0 -10px 30px -14px rgb(27 24 19 / 0.22);
+    /* The only colour: the next step, and anything already confirmed. */
+    --color-brand: #0a7a5a;
+    --color-brand-strong: #086349;
+    --color-brand-soft: #e8f5f0;
+    --color-brand-ink: #086349;
+    --color-on-brand: #ffffff;
 
-    --animate-sheet-up: sheet-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-    --animate-fade-in: fade-in 0.2s ease-out both;
-    --animate-pop: pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+    --color-warning: #8a5a00;
+    --color-warning-soft: #fdf3d7;
+    --color-danger: #b42318;
+    --color-danger-soft: #fdeceb;
+
+    --shadow-bar: 0 -10px 30px -18px rgb(15 23 32 / 0.25);
+
+    --animate-sheet-up: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    --animate-pop: pop 0.35s cubic-bezier(0.2, 1.3, 0.4, 1) both;
 
     @keyframes sheet-up {
         from {
             opacity: 0;
-            transform: translateY(1.5rem);
-        }
-    }
-
-    @keyframes fade-in {
-        from {
-            opacity: 0;
+            transform: translateY(1.25rem);
         }
     }
 
     @keyframes pop {
         from {
             opacity: 0;
-            transform: scale(0.6);
+            transform: scale(0.7);
         }
     }
 }
@@ -59,26 +68,27 @@
 @layer base {
     @media (prefers-color-scheme: dark) {
         :root {
-            --color-canvas: #12100c;
-            --color-surface: #1c1915;
-            --color-sunken: #28241d;
-            --color-line: #363027;
-            --color-ink: #f5f2ea;
-            --color-ink-soft: #bcb6a9;
-            --color-ink-faint: #959083;
-            --color-brand: #fb923c;
-            --color-brand-strong: #fdba74;
-            --color-brand-soft: #3a2413;
-            --color-brand-ink: #fdba74;
-            --color-success: #4ade80;
-            --color-success-soft: #12301d;
-            --color-warning: #facc15;
-            --color-warning-soft: #33290a;
-            --color-danger: #f87171;
-            --color-danger-soft: #3a1515;
+            --color-canvas: #0c1014;
+            --color-surface: #12171d;
+            --color-sunken: #181f27;
+            --color-line: #242c36;
+            --color-line-strong: #343f4d;
+            --color-ink: #eef2f6;
+            --color-ink-soft: #aab4c0;
+            --color-ink-faint: #838e9c;
 
-            --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -16px rgb(0 0 0 / 0.6);
-            --shadow-bar: 0 -10px 30px -14px rgb(0 0 0 / 0.7);
+            --color-brand: #2bb58c;
+            --color-brand-strong: #46c9a1;
+            --color-brand-soft: #0f2a22;
+            --color-brand-ink: #62d4b0;
+            --color-on-brand: #04261c;
+
+            --color-warning: #f2c14e;
+            --color-warning-soft: #2e2508;
+            --color-danger: #ff8a80;
+            --color-danger-soft: #351413;
+
+            --shadow-bar: 0 -10px 30px -18px rgb(0 0 0 / 0.8);
         }
     }
 
@@ -125,11 +135,11 @@
 
 @layer components {
     .card {
-        @apply border-line bg-surface shadow-card rounded-3xl border;
+        @apply border-line bg-surface rounded-2xl border;
     }
 
     .btn {
-        @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl px-5 text-base font-semibold transition select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+        @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-[0.9375rem] font-bold whitespace-nowrap transition select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
     }
 
     .btn-primary {
@@ -137,55 +147,74 @@
     }
 
     .btn-secondary {
-        @apply border-line bg-surface text-ink hover:bg-sunken border;
+        @apply border-line-strong bg-surface text-ink hover:bg-sunken border;
     }
 
-    .btn-quiet {
-        @apply text-ink-soft hover:bg-sunken hover:text-ink;
+    .btn-sm {
+        @apply min-h-11 px-4 text-sm;
     }
 
+    /* Round button holding one icon. */
     .icon-btn {
-        @apply text-ink-soft hover:bg-sunken hover:text-ink inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition active:scale-95;
+        @apply border-line bg-surface text-ink hover:bg-sunken inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border transition active:scale-95 disabled:pointer-events-none disabled:opacity-35;
+    }
+
+    /* Same hit area without the outline. */
+    .icon-btn-flat {
+        @apply text-ink-soft hover:bg-sunken hover:text-ink inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition;
     }
 
     .field {
-        @apply border-line bg-surface text-ink placeholder:text-ink-faint focus:border-brand focus:ring-brand/25 block min-h-12 w-full rounded-2xl border px-4 text-base transition outline-none focus:ring-4;
+        @apply border-line-strong bg-surface text-ink placeholder:text-ink-faint focus:border-brand focus:ring-brand/15 block min-h-12 w-full rounded-xl border px-3.5 text-base transition outline-none focus:ring-4;
     }
 
     .field[aria-invalid='true'] {
-        @apply border-danger focus:border-danger focus:ring-danger/20;
+        @apply border-danger focus:border-danger focus:ring-danger/15;
     }
 
     .field-label {
-        @apply text-ink-soft mb-1.5 block text-sm font-medium;
+        @apply text-ink mb-1.5 block text-sm font-semibold;
     }
 
     .field-error {
-        @apply text-danger mt-1.5 flex items-start gap-1.5 text-sm font-medium;
+        @apply text-danger mt-1.5 text-[0.8125rem] font-semibold;
     }
 
-    .eyebrow {
-        @apply text-ink-faint text-xs font-semibold tracking-wider uppercase;
+    /* Small grey label above a value. */
+    .caption {
+        @apply text-ink-faint text-[0.8125rem] leading-tight font-medium;
+    }
+
+    .section-title {
+        @apply text-ink text-lg leading-tight font-extrabold tracking-tight;
+    }
+
+    .pill {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs leading-none font-bold whitespace-nowrap;
     }
 
     .number-tile {
-        @apply bg-sunken text-ink flex h-12 cursor-pointer items-center justify-center rounded-xl text-base font-semibold tabular-nums transition duration-150 select-none active:scale-90;
+        @apply bg-sunken text-ink flex h-12 cursor-pointer items-center justify-center rounded-xl text-[0.9375rem] font-bold tabular-nums transition duration-100 select-none active:scale-90;
     }
 
     .number-tile[aria-pressed='true'] {
-        @apply bg-brand text-on-brand font-bold shadow-sm;
+        @apply bg-brand text-on-brand;
     }
 
     .number-tile:disabled {
-        @apply text-ink-faint cursor-not-allowed bg-transparent font-normal line-through opacity-55 active:scale-100;
+        @apply text-ink-faint cursor-not-allowed bg-transparent font-medium line-through opacity-50 active:scale-100;
     }
 
     .number-chip {
-        @apply bg-brand-soft text-brand-ink inline-flex h-9 items-center gap-1 rounded-full pr-1.5 pl-3 text-sm font-bold tabular-nums;
+        @apply bg-brand-soft text-brand-ink inline-flex h-9 items-center gap-0.5 rounded-full pr-1 pl-3 text-sm font-bold tabular-nums;
     }
 
-    .status-pill {
-        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold;
+    .meter {
+        @apply bg-sunken h-1.5 overflow-hidden rounded-full;
+    }
+
+    .meter > div {
+        @apply bg-brand h-full rounded-full;
     }
 
     .rich-text {
@@ -201,11 +230,11 @@
     }
 
     .rich-text :is(strong, b) {
-        @apply text-ink font-semibold;
+        @apply text-ink font-bold;
     }
 
     .rich-text a {
-        @apply text-brand-ink font-medium underline underline-offset-2;
+        @apply text-brand-ink font-semibold underline underline-offset-2;
     }
 
     .rich-text ul {
@@ -221,11 +250,11 @@
     }
 
     .rich-text blockquote {
-        @apply border-line border-l-4 pl-4 italic;
+        @apply border-line-strong border-l-2 pl-4;
     }
 
     .rich-text img {
-        @apply h-auto max-w-full rounded-2xl;
+        @apply h-auto max-w-full rounded-xl;
     }
 }
 
@@ -235,12 +264,4 @@
 
 @utility pt-safe {
     padding-top: max(0.75rem, env(safe-area-inset-top));
-}
-
-@utility scrollbar-none {
-    scrollbar-width: none;
-
-    &::-webkit-scrollbar {
-        display: none;
-    }
 }

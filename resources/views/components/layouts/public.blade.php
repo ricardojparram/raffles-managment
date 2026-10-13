@@ -16,8 +16,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="color-scheme" content="light dark">
-        <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)">
-        <meta name="theme-color" content="#12100c" media="(prefers-color-scheme: dark)">
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#0c1014" media="(prefers-color-scheme: dark)">
         <meta name="format-detection" content="telephone=no">
 
         <title>{{ $pageTitle }}</title>
@@ -41,6 +41,7 @@
             <meta name="twitter:card" content="summary">
         @endif
 
+        <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/fonts/manrope-latin.woff2') }}">
         @vite(['resources/css/public.css', 'resources/js/public.js'])
     </head>
     <body class="bg-canvas text-ink min-h-dvh font-sans antialiased">

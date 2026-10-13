@@ -11,7 +11,7 @@ const overflow = () => page.evaluate(() => document.documentElement.scrollWidth 
 await page.goto(RAFFLE);
 await settle();
 check('page fits a 320px screen', (await overflow()) <= 0, `overflow=${await overflow()}`);
-check('display font loaded', await page.evaluate(() => document.fonts.check('800 20px "Big Shoulders Display"')));
+check('brand font loaded', await page.evaluate(() => document.fonts.check('700 16px "Manrope"')));
 
 await page.locator('#numeros').scrollIntoViewIfNeeded();
 const free = page.locator('button[data-number]');

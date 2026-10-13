@@ -11,7 +11,7 @@
         {{ $attributes->class('size-full object-cover') }}
     >
 @else
-    <div {{ $attributes->class('from-brand-soft to-sunken text-brand-ink flex size-full items-center justify-center bg-linear-to-br') }} aria-hidden="true">
-        <x-heroicon-o-gift class="size-14 opacity-60" />
+    <div {{ $attributes->class('bg-sunken text-ink-faint flex size-full items-center justify-center') }} aria-hidden="true">
+        <x-heroicon-o-gift class="size-1/3 max-h-16" />
     </div>
 @endif

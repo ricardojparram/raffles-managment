@@ -1,13 +1,13 @@
 <div x-data="sheet('checker')">
-    <section class="card flex items-center gap-3.5 p-5" aria-labelledby="checker-title">
-        <span class="bg-sunken text-ink-soft flex size-11 shrink-0 items-center justify-center rounded-full">
+    <section class="card flex items-center gap-3.5 p-4" aria-labelledby="checker-title">
+        <span class="bg-sunken text-ink-soft flex size-10 shrink-0 items-center justify-center rounded-full">
             <x-heroicon-o-ticket class="size-5" />
         </span>
         <div class="min-w-0 flex-1 leading-tight">
             <h2 id="checker-title" class="font-bold">{{ __('Already bought?') }}</h2>
             <p class="text-ink-soft mt-0.5 text-sm">{{ __('Look up your tickets with your ID.') }}</p>
         </div>
-        <button type="button" class="btn btn-secondary min-h-11 shrink-0 px-4 text-sm" x-on:click="open = true">
+        <button type="button" class="btn btn-secondary btn-sm shrink-0" x-on:click="open = true">
             {{ __('Check') }}
         </button>
     </section>
@@ -23,13 +23,13 @@
     >
         <div class="mx-auto w-full max-w-xl px-4 pb-10">
             <header class="bg-canvas pt-safe sticky top-0 z-10 -mx-4 flex items-center gap-1 px-2 pb-2">
-                <button type="button" class="icon-btn" x-on:click="open = false" aria-label="{{ __('Close') }}">
+                <button type="button" class="icon-btn-flat" x-on:click="open = false" aria-label="{{ __('Close') }}">
                     <x-heroicon-m-arrow-left class="size-5" />
                 </button>
-                <h2 id="checker-sheet-title" class="text-lg font-bold">{{ __('Your tickets') }}</h2>
+                <h2 id="checker-sheet-title" class="section-title">{{ __('Your tickets') }}</h2>
             </header>
 
-            <form wire:submit="check" class="card mt-2 p-5" novalidate>
+            <form wire:submit="check" class="mt-3" novalidate>
                 <label for="checker-dni" class="field-label">{{ __('ID number') }}</label>
                 <div class="flex gap-2">
                     <input
@@ -56,13 +56,13 @@
                 <p class="text-ink-faint mt-2 text-xs">{{ __('Use the same ID you gave when you reported the payment.') }}</p>
             </form>
 
-            <div class="mt-4 space-y-3" aria-live="polite" wire:loading.class="opacity-50" wire:target="check">
+            <div class="mt-6 space-y-3" aria-live="polite" wire:loading.class="opacity-50" wire:target="check">
                 @if ($result !== null)
                     @foreach ($result['rejected'] as $reference)
-                        <div class="bg-danger-soft text-danger flex items-start gap-3 rounded-3xl p-4" wire:key="rejected-{{ $loop->index }}">
+                        <div class="bg-danger-soft text-danger flex items-start gap-3 rounded-2xl p-4" wire:key="rejected-{{ $loop->index }}">
                             <x-heroicon-o-exclamation-triangle class="mt-0.5 size-5 shrink-0" />
                             <div class="text-sm leading-snug">
-                                <p class="font-semibold">{{ __('The organizer rejected a payment you reported.') }}</p>
+                                <p class="font-bold">{{ __('The organizer rejected a payment you reported.') }}</p>
                                 <p class="mt-0.5">{{ __('Reference :reference. Its numbers were released, contact the organizer if this is a mistake.', ['reference' => $reference]) }}</p>
                             </div>
                         </div>
@@ -73,29 +73,26 @@
                             <span class="bg-sunken text-ink-soft flex size-12 items-center justify-center rounded-full">
                                 <x-heroicon-o-magnifying-glass class="size-6" />
                             </span>
-                            <p class="mt-3 font-semibold text-pretty">{{ __('We found no tickets for this ID in this raffle.') }}</p>
+                            <p class="mt-3 font-bold text-pretty">{{ __('We found no tickets for this ID in this raffle.') }}</p>
                             <p class="text-ink-soft mt-1 text-sm text-pretty">{{ __('Check the number and try again.') }}</p>
                         </div>
                     @else
                         <section class="card p-5">
                             <div class="flex items-baseline justify-between gap-3">
                                 <h3 class="font-bold">{{ $result['name'] }}</h3>
-                                <p class="text-ink-faint text-sm tabular-nums">{{ trans_choice('{1} :count ticket|[2,*] :count tickets', count($result['tickets']), ['count' => count($result['tickets'])]) }}</p>
+                                <p class="caption tabular-nums">{{ trans_choice('{1} :count ticket|[2,*] :count tickets', count($result['tickets']), ['count' => count($result['tickets'])]) }}</p>
                             </div>
-                            <ul class="divide-line mt-2 divide-y">
+                            <ul class="divide-line border-line mt-3 divide-y border-t">
                                 @foreach ($result['tickets'] as $ticket)
                                     <li class="flex items-center justify-between gap-3 py-3 last:pb-0" wire:key="ticket-{{ $ticket['number'] }}">
-                                        <span class="text-xl font-extrabold tracking-tight tabular-nums">{{ $ticket['number'] }}</span>
+                                        <span class="text-lg font-extrabold tracking-tight tabular-nums">{{ $ticket['number'] }}</span>
                                         @if ($ticket['confirmed'])
-                                            <span class="status-pill bg-success-soft text-success">
-                                                <x-heroicon-m-check-circle class="size-4" />
+                                            <span class="pill bg-brand-soft text-brand-ink">
+                                                <x-heroicon-m-check class="size-3.5" />
                                                 {{ __('Confirmed') }}
                                             </span>
                                         @else
-                                            <span class="status-pill bg-warning-soft text-warning">
-                                                <x-heroicon-m-clock class="size-4" />
-                                                {{ __('Awaiting confirmation') }}
-                                            </span>
+                                            <span class="pill bg-warning-soft text-warning">{{ __('Awaiting confirmation') }}</span>
                                         @endif
                                     </li>
                                 @endforeach

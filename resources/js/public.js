@@ -3,6 +3,9 @@
  * components below only register themselves and never boot Alpine on their own.
  */
 
+// The font is preloaded from Blade, so it has to be part of the build manifest.
+import.meta.glob(['../fonts/manrope-latin.woff2']);
+
 const PROOF_MAX_SIDE = 1600;
 const PROOF_QUALITY = 0.82;
 const PROOF_SKIP_BELOW_BYTES = 350_000;
