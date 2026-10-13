@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTeam;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class PaymentMethod extends Model
 {
@@ -28,6 +29,11 @@ class PaymentMethod extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class, 'payment_method_id');
+    }
+
+    public function iconUrl(): ?string
+    {
+        return filled($this->icon) ? Storage::disk('public')->url($this->icon) : null;
     }
 
     /**
