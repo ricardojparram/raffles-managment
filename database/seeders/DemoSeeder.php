@@ -27,14 +27,17 @@ class DemoSeeder extends Seeder
      */
     public function run(): void
     {
-        $team = Team::query()->firstOrCreate(['slug' => self::TEAM_SLUG], ['name' => 'Rifas El Chamo']);
+        $team = Team::query()->firstOrCreate(['slug' => self::TEAM_SLUG], [
+            'name' => 'Rifas El Chamo',
+            'runlot_number' => 'RUNLOT-2026-0412',
+        ]);
 
         if ($team->raffles()->exists()) {
             return;
         }
 
         if ($owner = User::query()->first()) {
-            $team->users()->syncWithoutDetaching([$owner->id => ['role' => 'admin']]);
+            $team->users()->syncWithoutDetaching([$owner->id => ['role' => 'owner']]);
         }
 
         $this->seedPaymentMethods($team);
@@ -50,6 +53,7 @@ class DemoSeeder extends Seeder
         $car = Raffle::query()->create([
             'team_id' => $team->id,
             'title' => 'Toyota Fortuner 2012 + combo playero',
+            'conalot_permit' => 'CONALOT-RIFA-2026-089',
             'date' => now()->addDays(6)->setTime(22, 0),
             'img' => $this->image("tenant-{$team->id}/raffles/fortuner.jpg", 1200, 900, [234, 88, 12], [120, 28, 10]),
             'currency' => 'USD',
