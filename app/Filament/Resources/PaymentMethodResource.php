@@ -82,6 +82,7 @@ class PaymentMethodResource extends Resource
                             ->label(__('Icon'))
                             ->image()
                             ->imageEditor()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                             ->disk('public')
                             ->visibility('public')
                             ->directory('payment-methods')

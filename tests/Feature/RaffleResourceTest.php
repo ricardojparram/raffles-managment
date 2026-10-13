@@ -156,6 +156,17 @@ class RaffleResourceTest extends TestCase
         Storage::disk('local')->assertMissing($path);
     }
 
+    public function test_cover_images_must_be_raster_files(): void
+    {
+        $raffle = $this->createRaffle();
+        $svg = UploadedFile::fake()->createWithContent('cover.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+
+        Livewire::test(EditRaffle::class, ['record' => $raffle->getRouteKey()])
+            ->fillForm(['img' => [$svg]])
+            ->call('save')
+            ->assertHasFormErrors(['img']);
+    }
+
     public function test_published_raffles_link_to_their_public_page(): void
     {
         $raffle = $this->createRaffle();

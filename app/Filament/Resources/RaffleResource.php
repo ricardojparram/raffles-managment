@@ -10,6 +10,7 @@ use App\Filament\Resources\RaffleResource\Pages\ListRaffles;
 use App\Filament\Schemas\Components\MoneyInput;
 use App\Models\Raffle;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -129,6 +130,7 @@ class RaffleResource extends Resource
                                 ->label(__('Image'))
                                 ->image()
                                 ->imageEditor()
+                                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                                 ->disk('public')
                                 ->visibility('public')
                                 ->directory(fn () => 'tenant-'.Filament::getTenant()->id.'/raffles')
@@ -170,6 +172,7 @@ class RaffleResource extends Resource
                                         ->label(__('Image'))
                                         ->image()
                                         ->imageEditor()
+                                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                                         ->disk('public')
                                         ->visibility('public')
                                         ->directory(fn () => 'tenant-'.Filament::getTenant()->id.'/prizes'),
@@ -235,24 +238,28 @@ class RaffleResource extends Resource
                 //
             ])
             ->recordActions([
-                Action::make('publicPage')
-                    ->label(__('Public page'))
-                    ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->color('gray')
-                    ->url(fn (Raffle $record): string => $record->publicUrl(), shouldOpenInNewTab: true)
-                    ->visible(fn (Raffle $record): bool => $record->status !== Status::Pending->value),
-                Action::make('copyPublicLink')
-                    ->label(__('Copy link'))
-                    ->icon('heroicon-o-link')
-                    ->color('gray')
-                    ->alpineClickHandler(fn (Raffle $record): string => sprintf(
-                        'window.navigator.clipboard.writeText(%s); $tooltip(%s, { timeout: 1500 })',
-                        Js::from($record->publicUrl()),
-                        Js::from(__('Link copied')),
-                    ))
-                    ->visible(fn (Raffle $record): bool => $record->status !== Status::Pending->value),
                 EditAction::make(),
                 ViewAction::make()->modalWidth(Width::ScreenExtraLarge),
+                ActionGroup::make([
+                    Action::make('publicPage')
+                        ->label(__('Public page'))
+                        ->icon('heroicon-o-arrow-top-right-on-square')
+                        ->url(fn (Raffle $record): string => $record->publicUrl(), shouldOpenInNewTab: true)
+                        ->visible(fn (Raffle $record): bool => $record->status !== Status::Pending->value),
+                    Action::make('copyPublicLink')
+                        ->label(__('Copy link'))
+                        ->icon('heroicon-o-link')
+                        ->alpineClickHandler(fn (Raffle $record): string => sprintf(
+                            'window.navigator.clipboard.writeText(%s); $tooltip(%s, { timeout: 1500 })',
+                            Js::from($record->publicUrl()),
+                            Js::from(__('Link copied')),
+                        ))
+                        ->visible(fn (Raffle $record): bool => $record->status !== Status::Pending->value),
+                ])
+                    ->label(__('Share'))
+                    ->icon('heroicon-o-share')
+                    ->color('gray')
+                    ->tooltip(__('Share')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

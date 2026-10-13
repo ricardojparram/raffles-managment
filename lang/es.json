@@ -76,8 +76,6 @@
     "{1} Pick at least :count number.|[2,*] Pick at least :count numbers.": "{1} Elige al menos :count número.|[2,*] Elige al menos :count números.",
     "This reference was already reported. If you think it is a mistake, contact the organizer.": "Esta referencia ya fue reportada. Si crees que es un error, contacta al organizador.",
     "We could not reserve your numbers. Please try again.": "No pudimos reservar tus números. Inténtalo de nuevo.",
-    "This raffle is organized and run by :organizer.": "Esta rifa es organizada y administrada por :organizer.",
-    ":app only provides the tools to manage it.": ":app solo provee la herramienta para gestionarla.",
     "Organized by": "Organiza",
     "Already bought?": "¿Ya compraste?",
     "Look up your tickets with your ID.": "Consulta tus tickets con tu cédula.",
@@ -190,5 +188,9 @@
     "Public page": "Página pública",
     "Copy link": "Copiar enlace",
     "My public page": "Mi página pública",
-    "Tickets": "Tickets"
+    "Tickets": "Tickets",
+    "The raffles on this page are organized and run by :organizer.": "Las rifas de esta página son organizadas y administradas por :organizer.",
+    ":app only provides the tools to manage them.": ":app solo provee la herramienta para gestionarlas.",
+    "Go to a range of numbers": "Ir a un rango de números",
+    "Share": "Compartir"
 }

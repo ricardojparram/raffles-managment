@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -271,6 +272,75 @@ class TicketPurchaseTest extends TestCase
             ->assertHasErrors(['dni', 'name', 'phone', 'reference', 'proof']);
     }
 
+    public function test_fields_are_not_judged_before_the_first_attempt(): void
+    {
+        $this->purchase()
+            ->set('selected', ['07'])
+            ->call('checkout')
+            ->set('dni', '12')
+            ->assertHasNoErrors('dni');
+    }
+
+    public function test_fixing_a_field_clears_its_error_right_away(): void
+    {
+        $this->purchase()
+            ->set('selected', ['07'])
+            ->call('checkout')
+            ->call('submit')
+            ->assertHasErrors(['dni', 'name'])
+            ->set('dni', '12345678')
+            ->assertHasNoErrors('dni')
+            ->assertHasErrors('name');
+    }
+
+    public function test_a_field_that_is_still_wrong_keeps_its_error(): void
+    {
+        $this->purchase()
+            ->set('selected', ['07'])
+            ->call('checkout')
+            ->call('submit')
+            ->set('dni', '12')
+            ->assertHasErrors('dni');
+    }
+
+    public function test_details_are_tidied_as_the_buyer_moves_on(): void
+    {
+        $this->purchase()
+            ->set('selected', ['07'])
+            ->call('checkout')
+            ->set('dni', 'V-12.345.678')
+            ->assertSet('dni', '12345678')
+            ->set('name', ' maría josé ')
+            ->assertSet('name', 'María José')
+            ->set('reference', ' ab 123456 ')
+            ->assertSet('reference', 'AB123456');
+    }
+
+    public function test_a_file_that_is_not_an_image_is_refused_as_soon_as_it_is_uploaded(): void
+    {
+        $this->purchase()
+            ->set('selected', ['07'])
+            ->call('checkout')
+            ->set('proof', UploadedFile::fake()->create('capture.pdf', 100, 'application/pdf'))
+            ->assertHasErrors('proof');
+    }
+
+    public function test_the_board_page_cannot_be_forced_from_the_browser(): void
+    {
+        $this->expectException(CannotUpdateLockedPropertyException::class);
+
+        $this->purchase()->set('page', 5000);
+    }
+
+    public function test_the_board_marks_the_numbers_already_picked(): void
+    {
+        $this->purchase()
+            ->set('selected', ['07'])
+            ->call('showPage', 0)
+            ->assertSeeHtml('data-number="07" aria-pressed="true"')
+            ->assertSeeHtml('data-number="08" aria-pressed="false"');
+    }
+
     public function test_reporting_a_payment_reserves_the_numbers(): void
     {
         $this->readyToPay(['07', '42'])
@@ -287,6 +357,29 @@ class TicketPurchaseTest extends TestCase
         $this->assertSame($this->zelle->id, $payment->payment_method_id);
         $this->assertEqualsCanonicalizing(['07', '42'], $payment->tickets()->pluck('number')->all());
         Storage::disk('local')->assertExists($payment->img);
+    }
+
+    public function test_the_temporary_upload_is_discarded_once_the_proof_is_stored(): void
+    {
+        $component = $this->readyToPay();
+        $temporary = $component->get('proof');
+
+        $this->assertTrue($temporary->exists());
+
+        $component->call('submit')->assertHasNoErrors();
+
+        $this->assertFalse($temporary->exists());
+        Storage::disk('local')->assertExists(Payment::query()->sole()->img);
+    }
+
+    public function test_removing_the_capture_discards_the_temporary_upload(): void
+    {
+        $component = $this->readyToPay();
+        $temporary = $component->get('proof');
+
+        $component->call('removeProof')->assertSet('proof', null);
+
+        $this->assertFalse($temporary->exists());
     }
 
     public function test_reporting_a_payment_cleans_up_what_the_buyer_typed(): void

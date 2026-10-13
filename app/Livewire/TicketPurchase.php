@@ -52,6 +52,7 @@ class TicketPurchase extends Component
      */
     public array $selected = [];
 
+    #[Locked]
     public int $page = 0;
 
     public string $search = '';
@@ -99,6 +100,23 @@ class TicketPurchase extends Component
         session()->put($this->sessionKey(), $this->only(
             $this->step === 'done' ? self::REMEMBERED_AFTER_PURCHASE : self::REMEMBERED,
         ));
+    }
+
+    /**
+     * Tidy each checkout field as the buyer leaves it, and re-check the ones a failed attempt flagged.
+     */
+    public function updated(string $property): void
+    {
+        if (! array_key_exists($property, $this->rules())) {
+            return;
+        }
+
+        $this->cleanInput();
+
+        if ($property === 'proof' || $this->getErrorBag()->has($property)) {
+            $this->resetErrorBag($property);
+            $this->validateOnly($property);
+        }
     }
 
     public function showPage(int $page): void
@@ -192,7 +210,7 @@ class TicketPurchase extends Component
 
     public function removeProof(): void
     {
-        $this->proof = null;
+        $this->discardProof();
         $this->resetErrorBag('proof');
     }
 
@@ -238,12 +256,14 @@ class TicketPurchase extends Component
 
         $this->paymentId = $payment->id;
         $this->step = 'done';
-        $this->reset('selected', 'reference', 'proof', 'search');
+        $this->discardProof();
+        $this->reset('selected', 'reference', 'search');
     }
 
     public function finish(): void
     {
-        $this->reset('selected', 'reference', 'proof', 'search', 'paymentId', 'rate');
+        $this->discardProof();
+        $this->reset('selected', 'reference', 'search', 'paymentId', 'rate');
         $this->resetErrorBag();
         $this->step = 'pick';
     }
@@ -265,7 +285,8 @@ class TicketPurchase extends Component
         return view('livewire.ticket-purchase', [
             'numbers' => $this->boardNumbers(),
             'pageCount' => $this->pageCount(),
-            'pageLabel' => $this->pageLabel(),
+            'pageLabel' => $this->pageLabel($this->page),
+            'pageLabels' => array_map($this->pageLabel(...), range(0, $this->pageCount() - 1)),
             'minimum' => $this->minimum(),
             'maximum' => $maximum,
             'prices' => array_map($this->formatInRaffleCurrency(...), $this->raffle->priceTable($maximum)),
@@ -318,6 +339,18 @@ class TicketPurchase extends Component
             'proof.max' => __('The capture is too heavy. Try with a smaller image.'),
             'proof.*' => __('Attach an image of your payment (JPG, PNG or WEBP).'),
         ];
+    }
+
+    /**
+     * Captures show bank details, so the temporary upload must not outlive its use.
+     */
+    private function discardProof(): void
+    {
+        if ($this->proof instanceof TemporaryUploadedFile && $this->proof->exists()) {
+            $this->proof->delete();
+        }
+
+        $this->proof = null;
     }
 
     private function cleanInput(): void
@@ -415,9 +448,9 @@ class TicketPurchase extends Component
         return max(1, (int) ceil($this->raffle->ticket_amount / Raffle::NUMBERS_PER_PAGE));
     }
 
-    private function pageLabel(): string
+    private function pageLabel(int $page): string
     {
-        $from = $this->page * Raffle::NUMBERS_PER_PAGE;
+        $from = $page * Raffle::NUMBERS_PER_PAGE;
         $to = min($from + Raffle::NUMBERS_PER_PAGE, $this->raffle->ticket_amount) - 1;
 
         return $this->raffle->formatNumber($from).' – '.$this->raffle->formatNumber($to);

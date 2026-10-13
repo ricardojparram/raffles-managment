@@ -22,7 +22,7 @@
         x-on:keydown.escape.window="open = false"
     >
         <div class="mx-auto w-full max-w-xl px-4 pb-10">
-            <header class="bg-canvas/95 pt-safe sticky top-0 z-10 -mx-4 flex items-center gap-1 px-2 pb-2 backdrop-blur-md">
+            <header class="bg-canvas pt-safe sticky top-0 z-10 -mx-4 flex items-center gap-1 px-2 pb-2">
                 <button type="button" class="icon-btn" x-on:click="open = false" aria-label="{{ __('Close') }}">
                     <x-heroicon-m-arrow-left class="size-5" />
                 </button>

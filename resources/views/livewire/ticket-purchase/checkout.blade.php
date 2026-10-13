@@ -4,14 +4,14 @@
 @endphp
 
 <div class="mx-auto flex min-h-full w-full max-w-xl flex-col px-4">
-    <header class="bg-canvas/95 pt-safe sticky top-0 z-10 -mx-4 flex items-center gap-1 px-2 pb-2 backdrop-blur-md">
+    <header class="bg-canvas pt-safe sticky top-0 z-10 -mx-4 flex items-center gap-1 px-2 pb-2">
         <button type="button" class="icon-btn" wire:click="backToNumbers" aria-label="{{ __('Back to the numbers') }}">
             <x-heroicon-m-arrow-left class="size-5" />
         </button>
         <h2 id="sheet-title" class="text-lg font-bold">{{ __('Report your payment') }}</h2>
     </header>
 
-    <form wire:submit="submit" class="flex flex-1 flex-col" novalidate>
+    <form x-on:submit.prevent="send()" class="flex flex-1 flex-col" novalidate>
         <div class="flex-1 space-y-6 pt-2 pb-6">
             <section class="card p-5" aria-label="{{ __('Your purchase') }}">
                 <div class="flex items-center justify-between gap-3">
@@ -43,10 +43,10 @@
                         {{ __('The organizer has not set up payment methods yet.') }}
                     </p>
                 @else
-                    <div class="mt-3 space-y-2.5" role="radiogroup" aria-label="{{ __('Payment method') }}">
+                    <div class="mt-3 space-y-2.5" role="radiogroup" aria-label="{{ __('Payment method') }}" @error('paymentMethodId') aria-invalid="true" @enderror>
                         @foreach ($paymentMethods as $method)
                             <label class="border-line bg-surface has-checked:border-brand has-checked:ring-brand/25 has-focus-visible:outline-brand flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition has-checked:ring-4 has-focus-visible:outline-2" wire:key="method-{{ $method->id }}">
-                                <input type="radio" name="payment-method" class="peer sr-only" value="{{ $method->id }}" wire:model="paymentMethodId">
+                                <input type="radio" name="payment-method" class="peer sr-only" value="{{ $method->id }}" wire:model.live="paymentMethodId">
                                 <span class="bg-sunken flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl">
                                     @if ($icon = $method->iconUrl())
                                         <img src="{{ $icon }}" alt="" class="size-full object-cover" width="88" height="88" decoding="async">
@@ -118,22 +118,22 @@
                 <div class="mt-3 grid grid-cols-2 gap-3">
                     <div class="col-span-2">
                         <label for="buyer-dni" class="field-label">{{ __('ID number') }}</label>
-                        <input id="buyer-dni" type="text" inputmode="numeric" autocomplete="off" class="field tabular-nums" placeholder="12345678" maxlength="12" wire:model="dni" @error('dni') aria-invalid="true" aria-describedby="buyer-dni-error" @enderror>
+                        <input id="buyer-dni" type="text" inputmode="numeric" autocomplete="off" class="field tabular-nums" placeholder="12345678" maxlength="12" wire:model.live.blur="dni" @error('dni') aria-invalid="true" aria-describedby="buyer-dni-error" @enderror>
                         @error('dni') <p id="buyer-dni-error" class="field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label for="buyer-name" class="field-label">{{ __('First name') }}</label>
-                        <input id="buyer-name" type="text" autocomplete="given-name" autocapitalize="words" class="field" maxlength="60" wire:model="name" @error('name') aria-invalid="true" aria-describedby="buyer-name-error" @enderror>
+                        <input id="buyer-name" type="text" autocomplete="given-name" autocapitalize="words" class="field" maxlength="60" wire:model.live.blur="name" @error('name') aria-invalid="true" aria-describedby="buyer-name-error" @enderror>
                         @error('name') <p id="buyer-name-error" class="field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label for="buyer-lastname" class="field-label">{{ __('Last name') }}</label>
-                        <input id="buyer-lastname" type="text" autocomplete="family-name" autocapitalize="words" class="field" maxlength="60" wire:model="lastname" @error('lastname') aria-invalid="true" aria-describedby="buyer-lastname-error" @enderror>
+                        <input id="buyer-lastname" type="text" autocomplete="family-name" autocapitalize="words" class="field" maxlength="60" wire:model.live.blur="lastname" @error('lastname') aria-invalid="true" aria-describedby="buyer-lastname-error" @enderror>
                         @error('lastname') <p id="buyer-lastname-error" class="field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="col-span-2">
                         <label for="buyer-phone" class="field-label">{{ __('Mobile number') }}</label>
-                        <input id="buyer-phone" type="tel" inputmode="tel" autocomplete="tel" class="field tabular-nums" placeholder="0412 1234567" maxlength="20" wire:model="phone" aria-describedby="buyer-phone-hint @error('phone') buyer-phone-error @enderror" @error('phone') aria-invalid="true" @enderror>
+                        <input id="buyer-phone" type="tel" inputmode="tel" autocomplete="tel" class="field tabular-nums" placeholder="0412 1234567" maxlength="20" wire:model.live.blur="phone" aria-describedby="buyer-phone-hint @error('phone') buyer-phone-error @enderror" @error('phone') aria-invalid="true" @enderror>
                         @error('phone')
                             <p id="buyer-phone-error" class="field-error" role="alert">{{ $message }}</p>
                         @enderror
@@ -151,7 +151,7 @@
                 <div class="mt-3 space-y-3">
                     <div>
                         <label for="payment-reference" class="field-label">{{ __('Reference number') }}</label>
-                        <input id="payment-reference" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" class="field tabular-nums uppercase placeholder:normal-case" placeholder="{{ __('As shown on your receipt') }}" maxlength="40" wire:model="reference" @error('reference') aria-invalid="true" aria-describedby="payment-reference-error" @enderror>
+                        <input id="payment-reference" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" class="field tabular-nums uppercase placeholder:normal-case" placeholder="{{ __('As shown on your receipt') }}" maxlength="40" wire:model.live.blur="reference" @error('reference') aria-invalid="true" aria-describedby="payment-reference-error" @enderror>
                         @error('reference') <p id="payment-reference-error" class="field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
 
@@ -190,13 +190,19 @@
                         </div>
 
                         <p class="field-error" x-show="failed" x-cloak role="alert">{{ __('The image could not be uploaded. Check your connection and try again.') }}</p>
+                        <p class="field-error" x-show="notAnImage" x-cloak role="alert">{{ __('Attach an image of your payment (JPG, PNG or WEBP).') }}</p>
                         @error('proof') <p class="field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </fieldset>
+
+            <p class="text-ink-faint flex items-start gap-2 text-xs text-pretty">
+                <x-heroicon-m-lock-closed class="mt-px size-4 shrink-0" />
+                {{ __('Your numbers stay reserved while the organizer confirms the payment.') }}
+            </p>
         </div>
 
-        <div class="border-line bg-canvas/95 pb-safe sticky bottom-0 -mx-4 border-t px-4 pt-3 backdrop-blur-md">
+        <div class="border-line bg-canvas pb-safe sticky bottom-0 -mx-4 border-t px-4 pt-3">
             @error('throttle')
                 <p class="bg-danger-soft text-danger mb-3 rounded-2xl px-4 py-2.5 text-sm font-medium" role="alert">{{ $message }}</p>
             @enderror
@@ -215,7 +221,6 @@
                     {{ __('Sending…') }}
                 </span>
             </button>
-            <p class="text-ink-faint mt-2 text-center text-xs text-pretty">{{ __('Your numbers stay reserved while the organizer confirms the payment.') }}</p>
         </div>
     </form>
 </div>

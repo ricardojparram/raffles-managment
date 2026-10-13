@@ -142,6 +142,32 @@ document.addEventListener('alpine:init', () => {
             return this.$wire.selected.includes(number);
         },
 
+        pick(event) {
+            const tile = event.target.closest('button[data-number]');
+
+            if (tile) {
+                this.toggle(tile.dataset.number);
+            }
+        },
+
+        paint(selected) {
+            const chosen = new Set(selected);
+
+            this.$refs.board.querySelectorAll('button[data-number]').forEach((tile) => {
+                tile.setAttribute('aria-pressed', chosen.has(tile.dataset.number) ? 'true' : 'false');
+            });
+        },
+
+        async send() {
+            await this.$wire.submit();
+
+            this.$nextTick(() => {
+                this.$refs.sheet
+                    ?.querySelector('[aria-invalid="true"]')
+                    ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            });
+        },
+
         toggle(number) {
             if (this.has(number)) {
                 this.remove(number);
@@ -183,7 +209,10 @@ document.addEventListener('alpine:init', () => {
                     window.history.pushState({ sheet: 'checkout' }, '');
                 }
 
-                this.$nextTick(() => this.$refs.sheet?.scrollTo({ top: 0 }));
+                this.$nextTick(() => {
+                    this.$refs.sheet?.scrollTo({ top: 0 });
+                    this.$refs.sheet?.focus({ preventScroll: true });
+                });
 
                 return;
             }
@@ -200,6 +229,7 @@ document.addEventListener('alpine:init', () => {
         progress: 0,
         preview: null,
         failed: false,
+        notAnImage: false,
 
         async pick(event) {
             const [file] = event.target.files;
@@ -210,6 +240,12 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.failed = false;
+            this.notAnImage = !file.type.startsWith('image/');
+
+            if (this.notAnImage) {
+                return;
+            }
+
             this.proofUploading = true;
             this.progress = 0;
 
@@ -237,6 +273,7 @@ document.addEventListener('alpine:init', () => {
         clear() {
             this.setPreview(null);
             this.failed = false;
+            this.notAnImage = false;
             this.$wire.removeProof();
         },
 

@@ -91,10 +91,24 @@
                 >
                     <x-heroicon-m-chevron-left class="size-5" />
                 </button>
-                <p class="text-center leading-tight" aria-live="polite">
-                    <span class="block font-bold tabular-nums">{{ $pageLabel }}</span>
+
+                <label class="hover:bg-sunken relative flex min-h-11 cursor-pointer flex-col items-center justify-center rounded-2xl px-4 text-center leading-tight transition">
+                    <span class="flex items-center gap-1 font-bold tabular-nums">
+                        {{ $pageLabel }}
+                        <x-heroicon-m-chevron-down class="text-ink-faint size-4" />
+                    </span>
                     <span class="text-ink-faint block text-xs">{{ __('Page :current of :total', ['current' => $page + 1, 'total' => $pageCount]) }}</span>
-                </p>
+                    <select
+                        class="absolute inset-0 size-full cursor-pointer opacity-0"
+                        aria-label="{{ __('Go to a range of numbers') }}"
+                        wire:change="showPage($event.target.value)"
+                    >
+                        @foreach ($pageLabels as $index => $label)
+                            <option value="{{ $index }}" @selected($index === $page)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </label>
+
                 <button
                     type="button"
                     class="icon-btn border-line border"
@@ -117,27 +131,20 @@
 
         <div
             class="mt-3 grid grid-cols-5 gap-2 transition-opacity sm:grid-cols-10"
+            wire:key="board-{{ $page }}"
             wire:loading.class="opacity-40"
             wire:target="showPage, findNumber"
+            x-ref="board"
+            x-on:click="pick($event)"
+            x-effect="paint($wire.selected)"
             role="group"
             aria-label="{{ __('Numbers :range', ['range' => $pageLabel]) }}"
         >
             @foreach ($numbers as $tile)
                 @if ($tile['taken'])
-                    <button type="button" class="number-tile" wire:key="number-{{ $tile['number'] }}" disabled aria-label="{{ __(':number, taken', ['number' => $tile['number']]) }}">
-                        {{ $tile['number'] }}
-                    </button>
+                    <button type="button" class="number-tile" disabled aria-label="{{ __(':number, taken', ['number' => $tile['number']]) }}">{{ $tile['number'] }}</button>
                 @else
-                    <button
-                        type="button"
-                        class="number-tile"
-                        wire:key="number-{{ $tile['number'] }}"
-                        x-on:click="toggle('{{ $tile['number'] }}')"
-                        x-bind:aria-pressed="has('{{ $tile['number'] }}')"
-                        aria-pressed="false"
-                    >
-                        {{ $tile['number'] }}
-                    </button>
+                    <button type="button" class="number-tile" data-number="{{ $tile['number'] }}" aria-pressed="{{ in_array($tile['number'], $selected, true) ? 'true' : 'false' }}">{{ $tile['number'] }}</button>
                 @endif
             @endforeach
         </div>
@@ -178,7 +185,7 @@
         </div>
     </section>
 
-    <div class="border-line bg-surface/95 shadow-bar pb-safe fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur-md">
+    <div class="border-line bg-surface shadow-bar pb-safe fixed inset-x-0 bottom-0 z-30 border-t">
         <div class="mx-auto flex w-full max-w-xl items-center gap-3 px-4 pt-3">
             <div class="min-w-0 flex-1 leading-tight" aria-live="polite">
                 <div x-show="count === 0">
@@ -220,7 +227,8 @@
     @if ($step !== 'pick')
         <div
             x-ref="sheet"
-            class="bg-canvas animate-sheet-up fixed inset-0 z-40 overflow-y-auto overscroll-contain"
+            class="bg-canvas animate-sheet-up fixed inset-0 z-40 overflow-y-auto overscroll-contain outline-none"
+            tabindex="-1"
             role="dialog"
             aria-modal="true"
             aria-labelledby="sheet-title"

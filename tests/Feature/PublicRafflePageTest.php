@@ -82,6 +82,17 @@ class PublicRafflePageTest extends TestCase
             ->assertSeeLivewire(TicketChecker::class);
     }
 
+    public function test_a_finished_raffle_hides_what_only_matters_while_selling(): void
+    {
+        $raffle = Raffle::factory()->finished()->create(['team_id' => $this->team->id]);
+        PaymentMethod::factory()->bolivars()->create(['team_id' => $this->team->id]);
+
+        $this->get($raffle->publicUrl())
+            ->assertOk()
+            ->assertDontSee(__('Ways to pay'))
+            ->assertDontSee(__('Tickets sold'));
+    }
+
     public function test_sales_are_closed_after_the_draw_date(): void
     {
         $raffle = Raffle::factory()->drawn()->create(['team_id' => $this->team->id]);

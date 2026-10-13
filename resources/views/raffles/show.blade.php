@@ -4,6 +4,8 @@
     $percentage = $raffle->soldPercentage();
     $available = $raffle->availableTicketsCount();
     $isAlmostGone = $isOpen && $available <= max(1, (int) floor($raffle->ticket_amount * 0.2));
+    $showsProgress = $isOpen || $status === \App\Enums\SalesStatus::SoldOut;
+    $shortDate = fn (\Carbon\CarbonInterface $date): string => str_replace('.', '', $date->isoFormat('ddd D MMM'));
 @endphp
 
 <x-layouts.public
@@ -54,7 +56,7 @@
                             </dt>
                             <dd class="mt-1 leading-tight">
                                 <time datetime="{{ $raffle->date->toIso8601String() }}">
-                                    <span class="block font-bold first-letter:uppercase">{{ $raffle->date->isoFormat('ddd D [de] MMM') }}</span>
+                                    <span class="block font-bold first-letter:uppercase">{{ $shortDate($raffle->date) }}</span>
                                     <span class="text-ink-soft block text-sm">{{ $raffle->date->isoFormat('h:mm a') }}</span>
                                 </time>
                             </dd>
@@ -78,24 +80,26 @@
                         </div>
                     @endif
 
-                    <div class="mt-5">
-                        <div class="flex items-baseline justify-between gap-3 text-sm">
-                            <span class="font-semibold">{{ __(':percentage% sold', ['percentage' => $percentage]) }}</span>
-                            @if ($isAlmostGone)
-                                <span class="text-brand-ink font-semibold">{{ trans_choice('{1} Only :count number left|[2,*] Only :count numbers left', $available, ['count' => $available]) }}</span>
-                            @endif
+                    @if ($showsProgress)
+                        <div class="mt-5">
+                            <div class="flex items-baseline justify-between gap-3 text-sm">
+                                <span class="font-semibold">{{ __(':percentage% sold', ['percentage' => $percentage]) }}</span>
+                                @if ($isAlmostGone)
+                                    <span class="text-brand-ink font-semibold">{{ trans_choice('{1} Only :count number left|[2,*] Only :count numbers left', $available, ['count' => $available]) }}</span>
+                                @endif
+                            </div>
+                            <div
+                                class="bg-sunken mt-2 h-2.5 overflow-hidden rounded-full"
+                                role="progressbar"
+                                aria-label="{{ __('Tickets sold') }}"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                                aria-valuenow="{{ $percentage }}"
+                            >
+                                <div class="bg-brand h-full rounded-full" style="width: {{ max(2, $percentage) }}%"></div>
+                            </div>
                         </div>
-                        <div
-                            class="bg-sunken mt-2 h-2.5 overflow-hidden rounded-full"
-                            role="progressbar"
-                            aria-label="{{ __('Tickets sold') }}"
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                            aria-valuenow="{{ $percentage }}"
-                        >
-                            <div class="bg-brand h-full rounded-full" style="width: {{ max(2, $percentage) }}%"></div>
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </section>
 
@@ -127,7 +131,7 @@
                                 <span class="min-w-0 leading-tight">
                                     <span class="block truncate font-bold">{{ $prize->title }}</span>
                                     @if ($prize->date)
-                                        <span class="text-ink-faint mt-0.5 block text-xs first-letter:uppercase">{{ $prize->date->isoFormat('ddd D [de] MMM, h:mm a') }}</span>
+                                        <span class="text-ink-faint mt-0.5 block text-xs first-letter:uppercase">{{ $shortDate($prize->date) }}, {{ $prize->date->isoFormat('h:mm a') }}</span>
                                     @endif
                                 </span>
                             </li>
@@ -155,7 +159,7 @@
                 </section>
             @endif
 
-            @if ($paymentMethods->isNotEmpty())
+            @if ($isOpen && $paymentMethods->isNotEmpty())
                 <section aria-labelledby="methods-title">
                     <h2 id="methods-title" class="eyebrow mb-3 px-1">{{ __('Ways to pay') }}</h2>
                     <ul class="flex flex-wrap gap-2">
