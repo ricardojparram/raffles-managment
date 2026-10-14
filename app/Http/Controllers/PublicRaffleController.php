@@ -24,7 +24,7 @@ class PublicRaffleController extends Controller
             'team' => $team,
             'raffle' => $raffle,
             'status' => $status,
-            'paymentMethods' => $team->paymentMethods()->orderBy('title')->get(),
+            'paymentMethods' => $team->paymentMethods()->active()->orderBy('title')->get(),
             'description' => Str::of($raffle->description)->sanitizeHtml()->toString(),
             'summary' => Str::of($raffle->description)->stripTags()->squish()->limit(155)->toString(),
         ]);

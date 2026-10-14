@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Tenancy;
 
+use App\Actions\SeedTeamPaymentMethods;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use Filament\Forms\Components\TextInput;
@@ -37,6 +38,9 @@ class RegisterTeam extends RegisterTenant
 
         // Asignar creador como owner del nuevo team
         $team->users()->attach(auth()->user(), ['role' => TeamRole::OWNER->value]);
+
+        // Inicializar los 4 métodos estándar de Venezuela listos para activar
+        (new SeedTeamPaymentMethods)->execute($team, defaultActive: false);
 
         return $team;
     }

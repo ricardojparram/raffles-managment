@@ -18,17 +18,32 @@
         <header class="flex items-center justify-between gap-3 py-2">
             <x-public.organizer :team="$team" :href="route('raffles.index', $team)" />
 
-            <button
-                type="button"
-                class="icon-btn"
-                x-data="shareLink(@js(['title' => $raffle->title, 'text' => __('Join this raffle: :title', ['title' => $raffle->title]), 'url' => $raffle->publicUrl()]))"
-                x-on:click="share()"
-                aria-label="{{ __('Share raffle') }}"
-            >
-                <x-heroicon-o-arrow-up-on-square class="size-5" x-show="! copied" />
-                <x-heroicon-m-check class="text-brand-ink size-5" x-show="copied" x-cloak />
-                <span class="sr-only" role="status" x-text="copied ? @js(__('Link copied')) : ''"></span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-sm flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold"
+                    x-data="copyable(@js($raffle->toShareText($paymentMethods)))"
+                    x-on:click="copy()"
+                    aria-label="{{ __('Copiar datos de la rifa') }}"
+                    title="{{ __('Copiar datos de la rifa para WhatsApp') }}"
+                >
+                    <x-heroicon-o-clipboard-document-list class="size-4" x-show="! copied" />
+                    <x-heroicon-m-check class="text-brand-ink size-4" x-show="copied" x-cloak />
+                    <span x-text="copied ? @js(__('¡Copiado!')) : @js(__('Copiar datos'))">{{ __('Copiar datos') }}</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="icon-btn"
+                    x-data="shareLink(@js(['title' => $raffle->title, 'text' => __('Join this raffle: :title', ['title' => $raffle->title]), 'url' => $raffle->publicUrl()]))"
+                    x-on:click="share()"
+                    aria-label="{{ __('Share raffle') }}"
+                >
+                    <x-heroicon-o-arrow-up-on-square class="size-5" x-show="! copied" />
+                    <x-heroicon-m-check class="text-brand-ink size-5" x-show="copied" x-cloak />
+                    <span class="sr-only" role="status" x-text="copied ? @js(__('Link copied')) : ''"></span>
+                </button>
+            </div>
         </header>
 
         <main class="mt-2 space-y-8">
@@ -151,13 +166,27 @@
 
             @if ($isOpen && $paymentMethods->isNotEmpty())
                 <section aria-labelledby="methods-title">
-                    <h2 id="methods-title" class="section-title mb-3">{{ __('Ways to pay') }}</h2>
+                    <div class="mb-3 flex items-center justify-between">
+                        <h2 id="methods-title" class="section-title">{{ __('Ways to pay') }}</h2>
+                        <button
+                            type="button"
+                            class="text-brand-ink flex items-center gap-1 text-xs font-bold"
+                            x-data="copyable(@js($raffle->toShareText($paymentMethods)))"
+                            x-on:click="copy()"
+                        >
+                            <x-heroicon-o-clipboard-document class="size-4" x-show="! copied" />
+                            <x-heroicon-m-check class="text-brand-ink size-4" x-show="copied" x-cloak />
+                            <span x-text="copied ? @js(__('¡Copiado!')) : @js(__('Copiar datos'))">{{ __('Copiar datos') }}</span>
+                        </button>
+                    </div>
                     <ul class="flex flex-wrap gap-2">
                         @foreach ($paymentMethods as $method)
                             <li class="border-line flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-sm font-semibold">
                                 <span class="bg-sunken flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full">
                                     @if ($icon = $method->iconUrl())
                                         <img src="{{ $icon }}" alt="" class="size-full object-cover" loading="lazy" decoding="async" width="56" height="56">
+                                    @else
+                                        <x-heroicon-o-credit-card class="size-4 text-ink-soft" />
                                     @endif
                                 </span>
                                 {{ $method->title }}

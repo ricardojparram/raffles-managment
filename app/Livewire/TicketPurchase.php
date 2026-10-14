@@ -281,7 +281,7 @@ class TicketPurchase extends Component
     #[Computed]
     public function paymentMethods(): Collection
     {
-        return $this->raffle->team->paymentMethods()->orderBy('title')->get();
+        return $this->raffle->team->paymentMethods()->active()->orderBy('title')->get();
     }
 
     public function render(): View

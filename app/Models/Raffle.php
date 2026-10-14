@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
@@ -210,5 +211,66 @@ class Raffle extends Model
             $this->availableTicketsCount() === 0 => SalesStatus::SoldOut,
             default => SalesStatus::Open,
         };
+    }
+
+    /**
+     * Formats the raffle data ready to be copied and shared on WhatsApp, Telegram, etc.
+     */
+    public function toShareText(?Collection $paymentMethods = null): string
+    {
+        $shortDate = str_replace('.', '', $this->date->isoFormat('dddd D [de] MMMM, h:mm a'));
+        $price = money($this->ticket_price, $this->currency)->format();
+
+        $lines = [
+            "🎟️ *{$this->title}*",
+            "🏢 *Organiza:* {$this->team->name}",
+        ];
+
+        if (filled($this->conalot_permit)) {
+            $lines[] = "⚖️ *Permiso CONALOT:* {$this->conalot_permit}";
+        }
+
+        if (filled($this->team->runlot_number)) {
+            $lines[] = "📋 *RUNLOT:* {$this->team->runlot_number}";
+        }
+
+        $lines[] = '📅 *Fecha del sorteo:* '.ucfirst($shortDate);
+        $lines[] = "💵 *Precio por boleto:* {$price}";
+
+        if ($this->relationLoaded('offers') && $this->offers->isNotEmpty()) {
+            $offerLines = [];
+            foreach ($this->offers->sortBy('ticket_amount') as $offer) {
+                $offerPrice = money($offer->price, $this->currency)->format();
+                $offerLines[] = "  • {$offer->ticket_amount} boletos por {$offerPrice}";
+            }
+            $lines[] = "\n🔥 *PROMOCIONES:*\n".implode("\n", $offerLines);
+        }
+
+        if ($this->relationLoaded('raffle_prizes') && $this->raffle_prizes->isNotEmpty()) {
+            $prizeLines = [];
+            foreach ($this->raffle_prizes->sortBy('date') as $prize) {
+                $prizeDate = $prize->date ? ' ('.str_replace('.', '', $prize->date->isoFormat('D MMM, h:mm a')).')' : '';
+                $prizeLines[] = "  • {$prize->title}{$prizeDate}";
+            }
+            $lines[] = "\n🎁 *PREMIOS ADICIONALES:*\n".implode("\n", $prizeLines);
+        }
+
+        $methods = $paymentMethods ?? $this->team->paymentMethods()->active()->get();
+
+        if ($methods->isNotEmpty()) {
+            $lines[] = "\n💳 *MÉTODOS DE PAGO DISPONIBLES:*";
+            foreach ($methods as $method) {
+                $currencyBadge = $method->currency === 'VED' ? 'Bs.' : $method->currency;
+                $lines[] = "\n👉 *{$method->title} ({$currencyBadge})*";
+                foreach ($method->description ?? [] as $label => $val) {
+                    $lines[] = "  • {$label}: {$val}";
+                }
+            }
+        }
+
+        $lines[] = "\n👉 *Elegí y comprá tus boletos acá:*\n".$this->publicUrl();
+        $lines[] = "\n🔍 *Verificá tus números comprados:*\n".$this->publicUrl().'#mis-boletos';
+
+        return trim(implode("\n", $lines));
     }
 }

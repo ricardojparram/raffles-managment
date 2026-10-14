@@ -1,0 +1,287 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Actions\SeedTeamPaymentMethods;
+use App\Enums\PaymentMethodType;
+use App\Filament\Resources\PaymentMethodResource\Pages\CreatePaymentMethod;
+use App\Filament\Resources\PaymentMethodResource\Pages\EditPaymentMethod;
+use App\Filament\Resources\PaymentMethodResource\Pages\ListPaymentMethods;
+use App\Livewire\TicketPurchase;
+use App\Models\PaymentMethod;
+use App\Models\Raffle;
+use App\Models\Team;
+use App\Models\User;
+use Filament\Facades\Filament;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+class PaymentMethodConfigurationTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected Team $team;
+
+    protected User $user;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::fake(['*' => Http::response(['promedio' => 800.0])]);
+
+        $this->team = Team::factory()->create(['name' => 'Rifas Caracas']);
+        $this->user = User::factory()->create();
+        $this->user->teams()->attach($this->team, ['role' => 'owner']);
+
+        $this->actingAs($this->user);
+        Filament::setTenant($this->team);
+    }
+
+    public function test_seed_team_payment_methods_creates_all_four_venezuelan_methods(): void
+    {
+        $newTeam = Team::factory()->create(['name' => 'Inversiones Maracaibo']);
+
+        (new SeedTeamPaymentMethods)->execute($newTeam, defaultActive: false);
+
+        $methods = $newTeam->paymentMethods()->withoutGlobalScope('team')->get();
+
+        $this->assertCount(4, $methods);
+        $this->assertTrue($methods->contains(fn ($m) => $m->type === PaymentMethodType::PagoMovil && $m->currency === 'VED'));
+        $this->assertTrue($methods->contains(fn ($m) => $m->type === PaymentMethodType::Transferencia && $m->currency === 'VED'));
+        $this->assertTrue($methods->contains(fn ($m) => $m->type === PaymentMethodType::Binance && $m->currency === 'USD'));
+        $this->assertTrue($methods->contains(fn ($m) => $m->type === PaymentMethodType::Zelle && $m->currency === 'USD'));
+        $this->assertFalse($methods->first()->is_active);
+    }
+
+    public function test_payment_method_resource_can_list_records(): void
+    {
+        $method = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::PagoMovil,
+            'title' => 'Pago Móvil BDV',
+            'currency' => 'VED',
+            'is_active' => true,
+        ]);
+
+        Livewire::test(ListPaymentMethods::class)
+            ->assertCanSeeTableRecords([$method])
+            ->assertTableColumnStateSet('is_active', true, $method);
+    }
+
+    public function test_payment_method_can_be_created_with_structured_pago_movil_fields(): void
+    {
+        Livewire::test(CreatePaymentMethod::class)
+            ->fillForm([
+                'type' => PaymentMethodType::PagoMovil->value,
+                'title' => 'Pago Móvil Banesco',
+                'currency' => 'VED',
+                'is_active' => true,
+                'description' => [
+                    'Banco' => 'Banesco (0134)',
+                    'Teléfono' => '0414-1234567',
+                    'Cédula' => 'V-19876543',
+                ],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $created = PaymentMethod::where('team_id', $this->team->id)->where('title', 'Pago Móvil Banesco')->first();
+        $this->assertNotNull($created);
+        $this->assertSame(PaymentMethodType::PagoMovil, $created->type);
+        $this->assertSame('VED', $created->currency);
+        $this->assertTrue($created->is_active);
+        $this->assertSame('Banesco (0134)', $created->description['Banco']);
+        $this->assertSame('0414-1234567', $created->description['Teléfono']);
+        $this->assertSame('V-19876543', $created->description['Cédula']);
+    }
+
+    public function test_payment_method_can_be_created_with_transferencia_and_binance(): void
+    {
+        Livewire::test(CreatePaymentMethod::class)
+            ->fillForm([
+                'type' => PaymentMethodType::Transferencia->value,
+                'title' => 'Transferencia Mercantil',
+                'currency' => 'VED',
+                'is_active' => true,
+                'description' => [
+                    'Banco' => 'Mercantil (0105)',
+                    'Número de Cuenta' => '01050000000000000000',
+                    'Cédula / RIF' => 'J-12345678-0',
+                    'Titular' => 'Rifas Caracas C.A.',
+                ],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $transferencia = PaymentMethod::where('team_id', $this->team->id)->where('title', 'Transferencia Mercantil')->first();
+        $this->assertNotNull($transferencia);
+        $this->assertSame(PaymentMethodType::Transferencia, $transferencia->type);
+        $this->assertSame('01050000000000000000', $transferencia->description['Número de Cuenta']);
+
+        Livewire::test(CreatePaymentMethod::class)
+            ->fillForm([
+                'type' => PaymentMethodType::Binance->value,
+                'title' => 'Binance Pay USDT',
+                'currency' => 'USD',
+                'is_active' => true,
+                'description' => [
+                    'Pay ID' => '99887766',
+                    'Usuario' => 'rifas_ccs',
+                ],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $binance = PaymentMethod::where('team_id', $this->team->id)->where('title', 'Binance Pay USDT')->first();
+        $this->assertNotNull($binance);
+        $this->assertSame(PaymentMethodType::Binance, $binance->type);
+        $this->assertSame('99887766', $binance->description['Pay ID']);
+    }
+
+    public function test_payment_method_can_be_created_with_custom_fallback(): void
+    {
+        Livewire::test(CreatePaymentMethod::class)
+            ->fillForm([
+                'type' => PaymentMethodType::Custom->value,
+                'title' => 'Zinli',
+                'currency' => 'USD',
+                'is_active' => true,
+                'custom_description' => [
+                    'Correo' => 'zinli@rifascaracas.com',
+                ],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $custom = PaymentMethod::where('team_id', $this->team->id)->where('title', 'Zinli')->first();
+        $this->assertNotNull($custom);
+        $this->assertSame(PaymentMethodType::Custom, $custom->type);
+        $this->assertSame('zinli@rifascaracas.com', $custom->description['Correo']);
+    }
+
+    public function test_payment_method_can_be_edited_and_toggled(): void
+    {
+        $method = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::Zelle,
+            'title' => 'Zelle Principal',
+            'currency' => 'USD',
+            'is_active' => true,
+            'description' => [
+                'Correo' => 'viejo@correo.com',
+                'Titular' => 'Pedro Perez',
+            ],
+        ]);
+
+        Livewire::test(EditPaymentMethod::class, ['record' => $method->getRouteKey()])
+            ->fillForm([
+                'is_active' => false,
+                'description' => [
+                    'Correo' => 'nuevo@zelle.com',
+                    'Titular' => 'Rifas Caracas LLC',
+                ],
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $method->refresh();
+        $this->assertFalse($method->is_active);
+        $this->assertSame('nuevo@zelle.com', $method->description['Correo']);
+        $this->assertSame('Rifas Caracas LLC', $method->description['Titular']);
+    }
+
+    public function test_inactive_payment_methods_are_not_shown_on_public_raffle_page(): void
+    {
+        $raffle = Raffle::factory()->create(['team_id' => $this->team->id]);
+
+        PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'title' => 'Pago Móvil Activo',
+            'is_active' => true,
+        ]);
+
+        PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'title' => 'Zelle Desactivado',
+            'is_active' => false,
+        ]);
+
+        $this->get($raffle->publicUrl())
+            ->assertOk()
+            ->assertSee('Pago Móvil Activo')
+            ->assertDontSee('Zelle Desactivado');
+    }
+
+    public function test_inactive_payment_methods_are_not_available_in_ticket_purchase(): void
+    {
+        $raffle = Raffle::factory()->create(['team_id' => $this->team->id, 'ticket_price' => 1000]);
+
+        $active = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'title' => 'Método Activo',
+            'is_active' => true,
+        ]);
+
+        $inactive = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'title' => 'Método Inactivo',
+            'is_active' => false,
+        ]);
+
+        $component = Livewire::test(TicketPurchase::class, ['raffle' => $raffle]);
+        $methods = $component->instance()->paymentMethods();
+
+        $this->assertTrue($methods->contains('id', $active->id));
+        $this->assertFalse($methods->contains('id', $inactive->id));
+    }
+
+    public function test_raffle_to_share_text_formats_complete_details_for_whatsapp(): void
+    {
+        $raffle = Raffle::factory()->create([
+            'team_id' => $this->team->id,
+            'title' => 'Toyota Hilux 2024',
+            'conalot_permit' => 'CONALOT-2026-999',
+            'ticket_price' => 1000,
+            'currency' => 'USD',
+            'date' => now()->addDays(5)->setTime(20, 0),
+        ]);
+
+        PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::PagoMovil,
+            'title' => 'Pago Móvil BDV',
+            'currency' => 'VED',
+            'is_active' => true,
+            'description' => [
+                'Banco' => 'Banco de Venezuela (0102)',
+                'Teléfono' => '0412-1112233',
+                'Cédula' => 'V-20111222',
+            ],
+        ]);
+
+        $text = $raffle->toShareText();
+
+        $this->assertStringContainsString('Toyota Hilux 2024', $text);
+        $this->assertStringContainsString('Rifas Caracas', $text);
+        $this->assertStringContainsString('CONALOT-2026-999', $text);
+        $this->assertStringContainsString('$10.00', $text);
+        $this->assertStringContainsString('Pago Móvil BDV (Bs.)', $text);
+        $this->assertStringContainsString('Banco de Venezuela (0102)', $text);
+        $this->assertStringContainsString('0412-1112233', $text);
+        $this->assertStringContainsString($raffle->publicUrl(), $text);
+    }
+
+    public function test_public_raffle_page_renders_copy_all_data_button(): void
+    {
+        $raffle = Raffle::factory()->create(['team_id' => $this->team->id, 'title' => 'Moto Bera']);
+
+        $this->get($raffle->publicUrl())
+            ->assertOk()
+            ->assertSee('x-data="copyable', false)
+            ->assertSee(__('Copiar datos'))
+            ->assertSee('aria-label="'.__('Copiar datos de la rifa').'"', false);
+    }
+}

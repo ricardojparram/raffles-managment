@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PaymentMethodType;
 use App\Models\Customer;
 use App\Models\Offer;
 use App\Models\PaymentMethod;
@@ -122,17 +123,20 @@ class DemoSeeder extends Seeder
     private function seedPaymentMethods(Team $team): void
     {
         $methods = [
-            ['Pago Móvil', 'VED', ['Banco' => 'Banco de Venezuela (0102)', 'Cédula' => 'V-18.456.321', 'Teléfono' => '0412-555-0142'], [220, 38, 38]],
-            ['Zelle', 'USD', ['Correo' => 'pagos@rifaselchamo.com', 'Titular' => 'Rifas El Chamo LLC'], [109, 40, 217]],
-            ['Binance Pay', 'USD', ['Pay ID' => '284 551 903', 'Usuario' => 'rifaselchamo'], [234, 179, 8]],
+            [PaymentMethodType::PagoMovil, 'Pago Móvil', 'VED', ['Banco' => 'Banco de Venezuela (0102)', 'Cédula' => 'V-18.456.321', 'Teléfono' => '0412-555-0142'], [220, 38, 38]],
+            [PaymentMethodType::Transferencia, 'Transferencia Bancaria', 'VED', ['Banco' => 'Banesco (0134)', 'Número de Cuenta' => '0134-1029-44-0001234567', 'Cédula / RIF' => 'J-40123456-7', 'Titular' => 'Rifas El Chamo C.A.'], [37, 99, 235]],
+            [PaymentMethodType::Zelle, 'Zelle', 'USD', ['Correo' => 'pagos@rifaselchamo.com', 'Titular' => 'Rifas El Chamo LLC'], [109, 40, 217]],
+            [PaymentMethodType::Binance, 'Binance Pay', 'USD', ['Pay ID' => '284 551 903', 'Usuario' => 'rifaselchamo'], [234, 179, 8]],
         ];
 
-        foreach ($methods as $index => [$title, $currency, $details, $color]) {
+        foreach ($methods as $index => [$type, $title, $currency, $details, $color]) {
             PaymentMethod::query()->create([
                 'team_id' => $team->id,
+                'type' => $type,
                 'title' => $title,
                 'description' => $details,
                 'currency' => $currency,
+                'is_active' => true,
                 'icon' => $this->image("payment-methods/demo-{$index}.jpg", 160, 160, $color, array_map(fn (int $channel): int => (int) ($channel * 0.7), $color)),
             ]);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethodType;
 use App\Models\Concerns\BelongsToTeam;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,17 +15,37 @@ class PaymentMethod extends Model
 
     protected $fillable = [
         'team_id',
+        'type',
         'title',
         'description',
         'currency',
         'icon',
+        'is_active',
     ];
 
-    public function casts()
+    public function casts(): array
     {
         return [
             'description' => 'array',
+            'type' => PaymentMethodType::class,
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function formattedDetails(): string
+    {
+        if (empty($this->description)) {
+            return '';
+        }
+
+        return collect($this->description)
+            ->map(fn ($val, $key) => "• {$key}: {$val}")
+            ->join("\n");
     }
 
     public function payments()
