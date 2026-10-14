@@ -16,7 +16,7 @@ class RaffleSeeder extends Seeder
             'title' => 'La revancha de semana santa',
             'description' => '<p>Fortuner 2012 + combo playero.<br><br>Si lleva más de 5 números en la guantera le meto 2.000$ + un outlook 2025 para que pida perdón + iPhone 16 pro max.<br><br>La camioneta juega el sábado 12 de abril.<br><br>Premios anticipados a repartir<br>1.000$ 09/04/25<br>1.000$ 10/04/25<br>1.000$ 11/04/25<br><br>Valor del boleto 10 dolaritos&nbsp;<br>3 boletos x 25$&nbsp;<br><br>Todos los premios jugarán por la lotería motilón noche a las 10:00pm hora de venezuela.<br><br>BUENA SUERTEEEEE✌🏻💚</p>',
             'date' => now()->addDays(10)->setTime(20, 0),
-            'img' => '01JRQTETZM5NHTE6CK1KG7PCQX.jpg',
+            'img' => '01K7TCF3MR48YRB7TDFGQD44K9.jpg',
             'ticket_price' => 1000,
             'status' => 'active',
             'ticket_amount' => 100,
