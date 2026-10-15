@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
@@ -241,11 +242,18 @@ class PaymentMethodResource extends Resource
                             ->weight('bold')
                             ->size('lg')
                             ->icon(fn (PaymentMethod $record): string => match ($record->type) {
-                                PaymentMethodType::PagoMovil => 'heroicon-o-device-phone-mobile',
-                                PaymentMethodType::Transferencia => 'heroicon-o-building-library',
-                                PaymentMethodType::Binance => 'heroicon-o-currency-dollar',
-                                PaymentMethodType::Zelle => 'heroicon-o-bolt',
+                                PaymentMethodType::PagoMovil => 'pay-pago-movil',
+                                PaymentMethodType::Transferencia => 'pay-transferencia',
+                                PaymentMethodType::Binance => 'pay-binance',
+                                PaymentMethodType::Zelle => 'pay-zelle',
                                 default => 'heroicon-o-credit-card',
+                            })
+                            ->iconColor(fn (PaymentMethod $record) => match ($record->type) {
+                                PaymentMethodType::Zelle => Color::hex('#9333ea'),
+                                PaymentMethodType::Binance => Color::hex('#F3BA2F'),
+                                PaymentMethodType::PagoMovil => 'danger',
+                                PaymentMethodType::Transferencia => 'info',
+                                default => 'gray',
                             }),
                         ToggleColumn::make('is_active')
                             ->label(__('Activo'))
@@ -253,7 +261,8 @@ class PaymentMethodResource extends Resource
                     ]),
                     TextColumn::make('type')
                         ->badge()
-                        ->color('gray'),
+                        ->color('gray')
+                        ->icon(null),
                     TextColumn::make('description_summary')
                         ->label(__('Datos de la cuenta'))
                         ->state(function (PaymentMethod $record): string {

@@ -72,6 +72,38 @@ class PaymentMethodConfigurationTest extends TestCase
             ->assertTableColumnStateSet('is_active', true, $method);
     }
 
+    public function test_payment_methods_use_authentic_svg_icons_for_zelle_and_binance(): void
+    {
+        $this->assertSame('pay-zelle', PaymentMethodType::Zelle->getIcon());
+        $this->assertSame('pay-binance', PaymentMethodType::Binance->getIcon());
+        $this->assertSame('pay-pago-movil', PaymentMethodType::PagoMovil->getIcon());
+        $this->assertSame('pay-transferencia', PaymentMethodType::Transferencia->getIcon());
+
+        $this->assertFileExists(resource_path('svg/zelle.svg'));
+        $this->assertFileExists(resource_path('svg/binance.svg'));
+        $this->assertFileExists(resource_path('svg/pago-movil.svg'));
+        $this->assertFileExists(resource_path('svg/transferencia.svg'));
+
+        $zelle = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::Zelle,
+            'title' => 'Zelle',
+            'currency' => 'USD',
+            'is_active' => true,
+        ]);
+
+        $binance = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::Binance,
+            'title' => 'Binance Pay',
+            'currency' => 'USD',
+            'is_active' => true,
+        ]);
+
+        Livewire::test(ListPaymentMethods::class)
+            ->assertCanSeeTableRecords([$zelle, $binance]);
+    }
+
     public function test_organizers_cannot_create_or_delete_payment_methods(): void
     {
         $method = PaymentMethod::factory()->create([

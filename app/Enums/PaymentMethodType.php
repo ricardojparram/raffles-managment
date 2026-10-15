@@ -58,10 +58,10 @@ enum PaymentMethodType: string implements HasColor, HasIcon, HasLabel
     public function getIcon(): ?string
     {
         return match ($this) {
-            self::PagoMovil => 'heroicon-o-device-phone-mobile',
-            self::Transferencia => 'heroicon-o-building-library',
-            self::Binance => 'heroicon-o-currency-dollar',
-            self::Zelle => 'heroicon-o-banknotes',
+            self::PagoMovil => 'pay-pago-movil',
+            self::Transferencia => 'pay-transferencia',
+            self::Binance => 'pay-binance',
+            self::Zelle => 'pay-zelle',
             self::Custom => 'heroicon-o-credit-card',
         };
     }
