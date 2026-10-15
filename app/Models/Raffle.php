@@ -43,6 +43,7 @@ class Raffle extends Model
         'minimum_tickets',
         'status',
         'conalot_permit',
+        'winning_number',
     ];
 
     protected $casts = [
@@ -212,6 +213,32 @@ class Raffle extends Model
             $this->availableTicketsCount() === 0 => SalesStatus::SoldOut,
             default => SalesStatus::Open,
         };
+    }
+
+    /**
+     * Extracts winning numbers as an array of trimmed strings.
+     *
+     * @return array<int, string>
+     */
+    public function winningNumbers(): array
+    {
+        if (blank($this->winning_number)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', explode(',', (string) $this->winning_number))));
+    }
+
+    /**
+     * Checks if this raffle has any winning numbers declared.
+     */
+    public function hasWinningNumbers(): bool
+    {
+        if (filled($this->winning_number)) {
+            return true;
+        }
+
+        return $this->raffle_prizes()->whereNotNull('winning_number')->where('winning_number', '!=', '')->exists();
     }
 
     /**

@@ -14,6 +14,7 @@ class RafflePrize extends Model
         'title',
         'date',
         'img',
+        'winning_number',
     ];
 
     /**

@@ -8,6 +8,8 @@ use App\Filament\Resources\RaffleResource\Pages\CreateRaffle;
 use App\Filament\Resources\RaffleResource\Pages\EditRaffle;
 use App\Filament\Resources\RaffleResource\Pages\ListRaffles;
 use App\Filament\Schemas\Components\MoneyInput;
+use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Raffle;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -22,20 +24,16 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use App\Models\Customer;
-use App\Models\Payment;
-use App\Models\PaymentMethod;
-use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Alignment;
-use Filament\Support\Enums\IconSize;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -134,6 +132,17 @@ class RaffleResource extends Resource
                                 ->placeholder('Ej. CONALOT-RIFA-2026-001')
                                 ->maxLength(255)
                                 ->helperText(__('Permit or authorization issued by CONALOT for this raffle.')),
+                            Select::make('status')
+                                ->label(__('Status'))
+                                ->options(Status::class)
+                                ->default(Status::Active->value)
+                                ->required()
+                                ->live(),
+                            TextInput::make('winning_number')
+                                ->label(__('Winning number(s)'))
+                                ->placeholder('Ej. 013 o 013, 275')
+                                ->maxLength(255)
+                                ->helperText(__('Ticket number(s) that won the main prize.')),
 
                             FileUpload::make('img')
                                 ->required()
@@ -186,6 +195,10 @@ class RaffleResource extends Resource
                                         ->disk('public')
                                         ->visibility('public')
                                         ->directory(fn () => 'tenant-'.Filament::getTenant()->id.'/prizes'),
+                                    TextInput::make('winning_number')
+                                        ->label(__('Número ganador'))
+                                        ->placeholder('Ej. 275')
+                                        ->maxLength(255),
                                 ]),
                         ]),
                         Section::make(__('Offers'))->description(__('Offers or discounts for tickets'))->schema([
@@ -318,6 +331,7 @@ class RaffleResource extends Resource
                                 ->title(__('Not enough tickets available'))
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -346,6 +360,41 @@ class RaffleResource extends Resource
                         Notification::make()
                             ->title(__('Sale registered successfully'))
                             ->body(__('Assigned numbers: :numbers', ['numbers' => implode(', ', $numbers)]))
+                            ->success()
+                            ->send();
+                    }),
+                Action::make('declareWinners')
+                    ->label(__('Registrar Ganadores'))
+                    ->icon('heroicon-o-trophy')
+                    ->color('warning')
+                    ->modalHeading(__('Registrar números ganadores'))
+                    ->form([
+                        TextInput::make('winning_number')
+                            ->label(__('Número ganador (Premio principal)'))
+                            ->placeholder('Ej. 013 o 013, 275')
+                            ->helperText(__('Separá con comas si son varios ganadores.'))
+                            ->required(),
+                        Select::make('status')
+                            ->label(__('Estado de la rifa'))
+                            ->options([
+                                Status::Finished->value => __('Finalizado'),
+                                Status::Active->value => __('Activo'),
+                            ])
+                            ->default(Status::Finished->value)
+                            ->required(),
+                    ])
+                    ->fillForm(fn (Raffle $record): array => [
+                        'winning_number' => $record->winning_number,
+                        'status' => $record->status ?? Status::Finished->value,
+                    ])
+                    ->action(function (array $data, Raffle $record): void {
+                        $record->update([
+                            'winning_number' => $data['winning_number'],
+                            'status' => $data['status'],
+                        ]);
+
+                        Notification::make()
+                            ->title(__('Números ganadores actualizados'))
                             ->success()
                             ->send();
                     }),

@@ -139,6 +139,26 @@ class PublicRafflePageTest extends TestCase
             ->assertDontSee('Metodo Ajeno');
     }
 
+    public function test_it_displays_winning_numbers_when_raffle_is_finished(): void
+    {
+        $raffle = Raffle::factory()->finished()->create([
+            'team_id' => $this->team->id,
+            'winning_number' => '042',
+        ]);
+        $raffle->raffle_prizes()->create([
+            'title' => 'Moto 150cc',
+            'winning_number' => '199',
+            'date' => now()->addDay(),
+        ]);
+
+        $this->get($raffle->publicUrl())
+            ->assertOk()
+            ->assertSee(__('¡Números Ganadores!'))
+            ->assertSee('042')
+            ->assertSee('Moto 150cc')
+            ->assertSee('199');
+    }
+
     /**
      * @param  array<string, mixed>  $attributes
      */

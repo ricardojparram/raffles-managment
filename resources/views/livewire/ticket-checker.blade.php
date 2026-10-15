@@ -86,9 +86,17 @@
                             </div>
                             <ul class="divide-line border-line mt-3 divide-y border-t">
                                 @foreach ($result['tickets'] as $ticket)
+                                    @php
+                                        $isWinningTicket = in_array((string) $ticket['number'], $raffle->winningNumbers(), true);
+                                    @endphp
                                     <li class="flex items-center justify-between gap-3 py-3 last:pb-0" wire:key="ticket-{{ $ticket['number'] }}">
                                         <span class="text-lg font-extrabold tracking-tight tabular-nums">{{ $ticket['number'] }}</span>
-                                        @if ($ticket['confirmed'])
+                                        @if ($isWinningTicket)
+                                            <span class="pill bg-amber-500/20 text-amber-500 dark:text-amber-400 font-black shadow-xs">
+                                                <x-heroicon-s-trophy class="size-3.5" />
+                                                {{ __('¡Boleto Ganador!') }}
+                                            </span>
+                                        @elseif ($ticket['confirmed'])
                                             <span class="pill bg-brand-soft text-brand-ink">
                                                 <x-heroicon-m-check class="size-3.5" />
                                                 {{ __('Confirmed') }}
