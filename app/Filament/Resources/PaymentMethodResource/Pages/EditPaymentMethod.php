@@ -10,6 +10,20 @@ class EditPaymentMethod extends EditRecord
 {
     protected static string $resource = PaymentMethodResource::class;
 
+    public function getTitle(): string
+    {
+        return $this->getRecord()->title;
+    }
+
+    public function getSubheading(): ?string
+    {
+        return match ($this->getRecord()->currency) {
+            'VED' => '🇻🇪 Cuentas en Bolívares (VED) • Completá los datos de cobro',
+            'USD' => '🇺🇸 Cuentas en Divisas / Cripto (USD) • Completá los datos de cobro',
+            default => null,
+        };
+    }
+
     protected function getHeaderActions(): array
     {
         return [];

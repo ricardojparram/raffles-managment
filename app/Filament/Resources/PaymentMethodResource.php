@@ -13,7 +13,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -62,7 +61,7 @@ class PaymentMethodResource extends Resource
     public static function form(Schema $schema): Schema
     {
         $matchesType = function (Get $get, ?PaymentMethod $record, PaymentMethodType ...$targets): bool {
-            $current = $get('type') ?? $record?->type;
+            $current = $record?->type ?? $get('type');
             if ($current instanceof PaymentMethodType) {
                 return in_array($current, $targets, true);
             }
@@ -74,42 +73,17 @@ class PaymentMethodResource extends Resource
 
         return $schema
             ->components([
-                Section::make(__('Configuración del Método'))
-                    ->description(__('Canal de pago preconfigurado por la plataforma. Activá o desactivá su disponibilidad y completá los datos de cobro.'))
-                    ->icon('heroicon-o-credit-card')
+                Section::make(__('Datos e Instrucciones de Pago'))
+                    ->description(__('Configurá los datos que verá el comprador al momento de realizar el pago por este método.'))
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->columns(2)
                     ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                Select::make('type')
-                                    ->label(__('Tipo de método'))
-                                    ->options(PaymentMethodType::class)
-                                    ->disabled()
-                                    ->dehydrated(false)
-                                    ->helperText(__('Definido por la plataforma.')),
-                                TextInput::make('title')
-                                    ->label(__('Nombre'))
-                                    ->disabled()
-                                    ->dehydrated(false),
-                                Select::make('currency')
-                                    ->label(__('Moneda'))
-                                    ->options([
-                                        'VED' => '🇻🇪 Bolívar (VED) - Bs.',
-                                        'USD' => '🇺🇸 Dólar (USD) - $',
-                                    ])
-                                    ->disabled()
-                                    ->dehydrated(false),
-                            ]),
-
                         Toggle::make('is_active')
                             ->label(__('Activo para recibir pagos'))
                             ->helperText(__('Si está desactivado, no se mostrará como opción en la página de las rifas ni en el checkout.'))
-                            ->default(true),
-                    ]),
+                            ->default(true)
+                            ->columnSpanFull(),
 
-                Section::make(__('Datos e Instrucciones de Pago'))
-                    ->description(__('Datos que verá el comprador para realizar el pago (Banco, Teléfono, Cédula, etc.).'))
-                    ->icon('heroicon-o-clipboard-document-list')
-                    ->schema([
                         Select::make('description.Banco')
                             ->label(__('Banco'))
                             ->options([
@@ -125,6 +99,7 @@ class PaymentMethodResource extends Resource
                                 'Banco del Tesoro (0163)' => 'Banco del Tesoro (0163)',
                             ])
                             ->searchable()
+                            ->columnSpanFull()
                             ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::PagoMovil, PaymentMethodType::Transferencia))
                             ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::PagoMovil, PaymentMethodType::Transferencia)),
 
@@ -146,6 +121,7 @@ class PaymentMethodResource extends Resource
                             ->label(__('Número de Cuenta (20 dígitos)'))
                             ->placeholder('0102-0000-00-0000000000')
                             ->mask('9999-9999-99-9999999999')
+                            ->columnSpanFull()
                             ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Transferencia))
                             ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Transferencia)),
 
@@ -259,24 +235,40 @@ class PaymentMethodResource extends Resource
                             ->label(__('Activo'))
                             ->grow(false),
                     ]),
-                    TextColumn::make('type')
-                        ->badge()
-                        ->color('gray')
-                        ->icon(null),
-                    TextColumn::make('description_summary')
+                    TextColumn::make('description_html')
                         ->label(__('Datos de la cuenta'))
+                        ->html()
                         ->state(function (PaymentMethod $record): string {
-                            if (empty($record->description)) {
-                                return '⚠️ '.__('Pendiente por configurar datos de cobro');
+                            if (empty($record->description) || ! collect($record->description)->filter(fn ($v) => filled($v))->count()) {
+                                return '<div class="flex items-center gap-2 rounded-xl border border-dashed border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs font-semibold text-amber-400">
+                                    <svg class="size-4 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <span>'.e(__('Pendiente por configurar datos de cobro')).'</span>
+                                </div>';
                             }
 
-                            return collect($record->description)
-                                ->map(fn ($value, $key): string => "{$key}: {$value}")
-                                ->join(' • ');
-                        })
-                        ->color(fn (PaymentMethod $record): string => empty($record->description) ? 'warning' : 'gray')
-                        ->size('sm')
-                        ->wrap(),
+                            $html = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 my-1">';
+
+                            foreach ($record->description as $label => $value) {
+                                if (! filled($value)) {
+                                    continue;
+                                }
+
+                                $isLong = in_array($label, ['Número de Cuenta', 'Titular', 'Correo', 'Banco'], true) || strlen((string) $value) > 24;
+                                $colSpan = $isLong ? 'sm:col-span-2' : 'col-span-1';
+
+                                $labelEscaped = e($label);
+                                $valueEscaped = e((string) $value);
+
+                                $html .= '<div class="flex flex-col justify-center rounded-xl bg-neutral-100/80 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.08] px-3 py-2 shadow-2xs '.$colSpan.'">
+                                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-400 leading-tight">'.$labelEscaped.'</span>
+                                    <span class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 font-mono tracking-tight select-all truncate mt-0.5 leading-snug" title="'.$valueEscaped.'">'.$valueEscaped.'</span>
+                                </div>';
+                            }
+
+                            $html .= '</div>';
+
+                            return $html;
+                        }),
                     Split::make([
                         TextColumn::make('currency')
                             ->badge()
@@ -303,7 +295,11 @@ class PaymentMethodResource extends Resource
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->label(__('Editar datos'))
+                    ->icon('heroicon-m-pencil-square')
+                    ->button()
+                    ->size('sm'),
             ]);
     }
 

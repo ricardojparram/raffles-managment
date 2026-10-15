@@ -160,7 +160,7 @@ class AdminPanelProvider extends PanelProvider
                             background-color: transparent !important;
                             border: none !important;
                             box-shadow: none !important;
-                            padding: 1.25rem 0.25rem 0.5rem !important;
+                            padding: 1.5rem 0.25rem 0.75rem !important;
                         }
                         .fi-ta-floating-cards .fi-ta-group-heading {
                             font-size: 1.125rem !important;
@@ -168,7 +168,29 @@ class AdminPanelProvider extends PanelProvider
                             color: inherit !important;
                         }
                         .fi-ta-floating-cards .fi-ta-content-grid {
-                            gap: 1rem !important;
+                            gap: 1.25rem !important;
+                        }
+                        .dark .fi-ta-floating-cards .fi-ta-record {
+                            background-color: rgba(24, 24, 27, 0.85) !important;
+                            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                            border-radius: 1.25rem !important;
+                            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
+                            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+                        }
+                        .dark .fi-ta-floating-cards .fi-ta-record:hover {
+                            border-color: rgba(255, 255, 255, 0.16) !important;
+                            box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.6) !important;
+                        }
+                        html:not(.dark) .fi-ta-floating-cards .fi-ta-record {
+                            background-color: #ffffff !important;
+                            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+                            border-radius: 1.25rem !important;
+                            box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.05) !important;
+                            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+                        }
+                        html:not(.dark) .fi-ta-floating-cards .fi-ta-record:hover {
+                            border-color: rgba(0, 0, 0, 0.16) !important;
+                            box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.1) !important;
                         }
                     </style>
                 ')

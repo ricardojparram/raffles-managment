@@ -142,9 +142,9 @@ class PaymentMethodConfigurationTest extends TestCase
         ]);
 
         Livewire::test(EditPaymentMethod::class, ['record' => $method->getRouteKey()])
-            ->assertFormFieldIsDisabled('type')
-            ->assertFormFieldIsDisabled('title')
-            ->assertFormFieldIsDisabled('currency')
+            ->assertFormFieldDoesNotExist('type')
+            ->assertFormFieldDoesNotExist('title')
+            ->assertFormFieldDoesNotExist('currency')
             ->fillForm([
                 'is_active' => false,
                 'description' => [
