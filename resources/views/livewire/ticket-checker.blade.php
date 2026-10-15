@@ -43,6 +43,8 @@
                         class="field min-w-0 flex-1 tabular-nums"
                         placeholder="12345678"
                         wire:model="dni"
+                        x-on:input="$el.value = $el.value.replace(/\D/g, '').slice(0, 9); $wire.set('dni', $el.value, false)"
+                        x-on:keydown="if (!/[0-9]/.test($event.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes($event.key) && !$event.ctrlKey && !$event.metaKey) $event.preventDefault()"
                         @error('dni') aria-invalid="true" aria-describedby="checker-dni-error" @enderror
                     >
                     <button type="submit" class="btn btn-primary shrink-0 px-4" wire:loading.attr="disabled" wire:target="check">

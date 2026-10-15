@@ -182,14 +182,8 @@
                     <ul class="flex flex-wrap gap-2">
                         @foreach ($paymentMethods as $method)
                             <li class="border-line flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-sm font-semibold">
-                                <span class="bg-sunken flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full">
-                                    @if ($icon = $method->iconUrl())
-                                        <img src="{{ $icon }}" alt="" class="size-full object-cover" loading="lazy" decoding="async" width="56" height="56">
-                                    @else
-                                        <x-heroicon-o-credit-card class="size-4 text-ink-soft" />
-                                    @endif
-                                </span>
-                                {{ $method->title }}
+                                <x-public.payment-icon :method="$method" class="size-7 rounded-full shrink-0" />
+                                <span>{{ $method->title }}</span>
                             </li>
                         @endforeach
                     </ul>

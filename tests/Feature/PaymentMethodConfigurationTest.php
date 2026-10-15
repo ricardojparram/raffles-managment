@@ -284,4 +284,102 @@ class PaymentMethodConfigurationTest extends TestCase
             ->assertSee(__('Copiar datos'))
             ->assertSee('aria-label="'.__('Copiar datos de la rifa').'"', false);
     }
+
+    public function test_payment_method_bank_key_detects_venezuelan_banks(): void
+    {
+        $bdv = PaymentMethod::factory()->make([
+            'title' => 'Pago Móvil BDV',
+            'description' => ['Banco' => 'Banco de Venezuela (0102)'],
+        ]);
+        $this->assertSame('bdv', $bdv->bankKey());
+
+        $banesco = PaymentMethod::factory()->make([
+            'title' => 'Transferencia Banesco',
+            'description' => ['Banco' => 'Banesco (0134)'],
+        ]);
+        $this->assertSame('banesco', $banesco->bankKey());
+
+        $mercantil = PaymentMethod::factory()->make([
+            'title' => 'Pago Móvil Mercantil',
+            'description' => ['Banco' => '0105 - Banco Mercantil'],
+        ]);
+        $this->assertSame('mercantil', $mercantil->bankKey());
+
+        $provincial = PaymentMethod::factory()->make([
+            'title' => 'Provincial',
+            'description' => ['Banco' => 'BBVA Provincial (0108)'],
+        ]);
+        $this->assertSame('provincial', $provincial->bankKey());
+
+        $bancamiga = PaymentMethod::factory()->make([
+            'title' => 'Bancamiga Móvil',
+            'description' => ['Banco' => 'Bancamiga (0172)'],
+        ]);
+        $this->assertSame('bancamiga', $bancamiga->bankKey());
+
+        $bnc = PaymentMethod::factory()->make([
+            'title' => 'Cuenta BNC',
+            'description' => ['Banco' => 'Banco Nacional de Crédito BNC (0191)'],
+        ]);
+        $this->assertSame('bnc', $bnc->bankKey());
+
+        $zelle = PaymentMethod::factory()->make([
+            'type' => PaymentMethodType::Zelle,
+            'title' => 'Zelle',
+            'description' => ['Correo' => 'zelle@empresa.com'],
+        ]);
+        $this->assertNull($zelle->bankKey());
+    }
+
+    public function test_payment_method_clipboard_payload_formats_structured_string_for_banking_apps(): void
+    {
+        $pagoMovil = PaymentMethod::factory()->make([
+            'type' => PaymentMethodType::PagoMovil,
+            'title' => 'Pago Móvil BDV',
+            'currency' => 'VED',
+            'description' => [
+                'Banco' => 'Banco de Venezuela (0102)',
+                'Teléfono' => '0412 1234567',
+                'Cédula' => 'V-12345678',
+            ],
+        ]);
+
+        $payload = $pagoMovil->clipboardPayload('150.00');
+
+        $this->assertStringContainsString('Banco: Banco de Venezuela (0102)', $payload);
+        $this->assertStringContainsString('Teléfono: 0412 1234567', $payload);
+        $this->assertStringContainsString('Cédula: V-12345678', $payload);
+        $this->assertStringContainsString('Monto: 150.00', $payload);
+    }
+
+    public function test_ticket_purchase_checkout_renders_copy_all_data_button_and_native_icons(): void
+    {
+        $raffle = Raffle::factory()->create([
+            'team_id' => $this->team->id,
+            'ticket_price' => 1000,
+            'currency' => 'VED',
+            'ticket_amount' => 100,
+        ]);
+
+        $method = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::PagoMovil,
+            'title' => 'Pago Móvil BDV',
+            'currency' => 'VED',
+            'is_active' => true,
+            'description' => [
+                'Banco' => 'Banco de Venezuela (0102)',
+                'Teléfono' => '0412 9998877',
+                'Cédula' => 'V-30111222',
+            ],
+        ]);
+
+        Livewire::test(TicketPurchase::class, ['raffle' => $raffle])
+            ->set('selected', ['00'])
+            ->call('checkout')
+            ->assertSee(__('Copiar todos los datos'))
+            ->assertSee(__('Copiar monto'))
+            ->assertSee('BDV')
+            ->assertSee('0412 9998877');
+    }
 }

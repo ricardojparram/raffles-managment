@@ -10,7 +10,6 @@ use App\Models\PaymentMethod;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -22,9 +21,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 
 class PaymentMethodResource extends Resource
@@ -105,22 +106,10 @@ class PaymentMethodResource extends Resource
                                     ->default('VED'),
                             ]),
 
-                        Grid::make(2)
-                            ->schema([
-                                Toggle::make('is_active')
-                                    ->label(__('Activo para recibir pagos'))
-                                    ->helperText(__('Si está desactivado, no se mostrará como opción en la página de las rifas ni en el checkout.'))
-                                    ->default(true),
-                                FileUpload::make('icon')
-                                    ->label(__('Icono / Logo (Opcional)'))
-                                    ->image()
-                                    ->imageEditor()
-                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'])
-                                    ->disk('public')
-                                    ->visibility('public')
-                                    ->directory('payment-methods')
-                                    ->nullable(),
-                            ]),
+                        Toggle::make('is_active')
+                            ->label(__('Activo para recibir pagos'))
+                            ->helperText(__('Si está desactivado, no se mostrará como opción en la página de las rifas ni en el checkout.'))
+                            ->default(true),
                     ]),
 
                 Section::make(__('Datos e Instrucciones de Pago'))
@@ -227,44 +216,79 @@ class PaymentMethodResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
-                ImageColumn::make('icon')
-                    ->label(__('Icon'))
-                    ->disk('public')
-                    ->size(40),
-                TextColumn::make('title')
-                    ->label(__('Método'))
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold')
-                    ->description(function (PaymentMethod $record) {
-                        return $record->description ? collect($record->description)->map(fn ($value, $key) => "$key: $value")->join(' • ') : null;
-                    }),
-                TextColumn::make('type')
-                    ->label(__('Tipo'))
-                    ->badge(),
-                TextColumn::make('currency')
+            ->defaultGroup('currency')
+            ->groups([
+                Group::make('currency')
                     ->label(__('Moneda'))
-                    ->badge()
-                    ->color(fn (string $state): string => $state === 'VED' ? 'danger' : 'success')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'VED' => '🇻🇪 VED (Bs.)',
-                        'USD' => '🇺🇸 USD ($)',
-                        default => $state,
-                    }),
-                ToggleColumn::make('is_active')
-                    ->label(__('Activo')),
-                TextColumn::make('integration')
-                    ->label(__('Integración'))
-                    ->state(function (PaymentMethod $record): string {
-                        return match ($record->type) {
-                            PaymentMethodType::PagoMovil, PaymentMethodType::Transferencia => 'Manual (API bancaria pronto)',
-                            PaymentMethodType::Binance => 'Manual (Binance Pay pronto)',
-                            default => 'Manual',
-                        };
+                    ->getTitleFromRecordUsing(fn (PaymentMethod $record): string => match ($record->currency) {
+                        'VED' => '🇻🇪 Cuentas en Bolívares (VED)',
+                        'USD' => '🇺🇸 Cuentas en Divisas / Cripto (USD)',
+                        default => $record->currency,
                     })
-                    ->badge()
-                    ->color('gray'),
+                    ->collapsible(false),
+            ])
+            ->contentGrid([
+                'default' => 1,
+                'md' => 2,
+            ])
+            ->columns([
+                Stack::make([
+                    Split::make([
+                        TextColumn::make('title')
+                            ->label(__('Método'))
+                            ->weight('bold')
+                            ->size('lg')
+                            ->icon(fn (PaymentMethod $record): string => match ($record->type) {
+                                PaymentMethodType::PagoMovil => 'heroicon-o-device-phone-mobile',
+                                PaymentMethodType::Transferencia => 'heroicon-o-building-library',
+                                PaymentMethodType::Binance => 'heroicon-o-currency-dollar',
+                                PaymentMethodType::Zelle => 'heroicon-o-bolt',
+                                default => 'heroicon-o-credit-card',
+                            })
+                            ->searchable()
+                            ->sortable(),
+                        ToggleColumn::make('is_active')
+                            ->label(__('Activo'))
+                            ->grow(false),
+                    ]),
+                    TextColumn::make('type')
+                        ->badge()
+                        ->color('gray'),
+                    TextColumn::make('description_summary')
+                        ->label(__('Datos de la cuenta'))
+                        ->state(function (PaymentMethod $record): string {
+                            if (empty($record->description)) {
+                                return '⚠️ '.__('Pendiente por configurar datos de cobro');
+                            }
+
+                            return collect($record->description)
+                                ->map(fn ($value, $key): string => "{$key}: {$value}")
+                                ->join(' • ');
+                        })
+                        ->color(fn (PaymentMethod $record): string => empty($record->description) ? 'warning' : 'gray')
+                        ->size('sm')
+                        ->wrap(),
+                    Split::make([
+                        TextColumn::make('currency')
+                            ->badge()
+                            ->color(fn (string $state): string => $state === 'VED' ? 'danger' : 'success')
+                            ->formatStateUsing(fn (string $state): string => match ($state) {
+                                'VED' => '🇻🇪 VED (Bs.)',
+                                'USD' => '🇺🇸 USD ($)',
+                                default => $state,
+                            }),
+                        TextColumn::make('integration')
+                            ->state(function (PaymentMethod $record): string {
+                                return match ($record->type) {
+                                    PaymentMethodType::PagoMovil, PaymentMethodType::Transferencia => 'Conciliación manual (API bancaria pronto)',
+                                    PaymentMethodType::Binance => 'Conciliación manual (Binance Pay pronto)',
+                                    default => 'Conciliación manual',
+                                };
+                            })
+                            ->badge()
+                            ->color('gray'),
+                    ]),
+                ])->space(3),
             ])
             ->filters([
                 //

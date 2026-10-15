@@ -44,13 +44,7 @@
                         @foreach ($paymentMethods as $method)
                             <label class="border-line has-checked:border-brand has-checked:bg-brand-soft has-focus-visible:outline-brand flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition has-focus-visible:outline-2" wire:key="method-{{ $method->id }}">
                                 <input type="radio" name="payment-method" class="peer sr-only" value="{{ $method->id }}" wire:model="paymentMethodId" x-on:change="$wire.$commit()">
-                                <span class="bg-sunken flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg">
-                                    @if ($icon = $method->iconUrl())
-                                        <img src="{{ $icon }}" alt="" class="size-full object-cover" width="80" height="80" decoding="async">
-                                    @else
-                                        <x-heroicon-o-banknotes class="text-ink-soft size-5" />
-                                    @endif
-                                </span>
+                                <x-public.payment-icon :method="$method" class="size-10 rounded-lg shrink-0" />
                                 <span class="min-w-0 flex-1 leading-tight">
                                     <span class="block truncate font-bold">{{ $method->title }}</span>
                                     <span class="text-ink-faint block text-[0.8125rem]">{{ $method->currency === 'VED' ? __('You pay in bolivars') : __('You pay in dollars') }}</span>
@@ -70,7 +64,7 @@
                         @php($quote = $quotes[$method->id])
 
                         <div class="card mt-3 overflow-hidden" wire:key="instructions-{{ $method->id }}" x-show="$wire.paymentMethodId == {{ $method->id }}" x-cloak>
-                            <div class="bg-sunken px-5 py-5 text-center" x-data="copyable(@js($quote['plain']))">
+                            <div class="bg-sunken px-5 py-5 text-center">
                                 <p class="caption">{{ __('Exact amount to send') }}</p>
                                 <p class="mt-1 text-[2rem] leading-none font-extrabold tracking-tight tabular-nums">{{ $quote['amount'] }}</p>
 
@@ -80,11 +74,19 @@
                                     <p class="text-ink-soft mt-2 text-[0.8125rem] font-medium text-pretty">{{ __('Pay the equivalent in bolivars at the official BCV rate of the day.') }}</p>
                                 @endif
 
-                                <button type="button" class="btn btn-secondary btn-sm mt-3.5 min-h-9 gap-1.5 px-3.5" x-on:click="copy()">
-                                    <x-heroicon-o-clipboard-document class="size-4" x-show="! copied" />
-                                    <x-heroicon-m-check class="text-brand-ink size-4" x-show="copied" x-cloak />
-                                    <span x-text="copied ? @js(__('Copied')) : @js(__('Copy amount'))">{{ __('Copy amount') }}</span>
-                                </button>
+                                <div class="mt-3.5 flex flex-wrap items-center justify-center gap-2">
+                                    <button type="button" class="btn btn-primary btn-sm min-h-9 gap-1.5 px-3.5 font-bold shadow-sm" x-data="copyable(@js($method->clipboardPayload($quote['amount'])))" x-on:click="copy()">
+                                        <x-heroicon-o-document-duplicate class="size-4" x-show="! copied" />
+                                        <x-heroicon-m-check class="text-on-brand size-4" x-show="copied" x-cloak />
+                                        <span x-text="copied ? @js(__('¡Datos copiados!')) : @js(__('Copiar todos los datos'))">{{ __('Copiar todos los datos') }}</span>
+                                    </button>
+
+                                    <button type="button" class="btn btn-secondary btn-sm min-h-9 gap-1.5 px-3" x-data="copyable(@js($quote['plain']))" x-on:click="copy()">
+                                        <x-heroicon-o-clipboard-document class="size-4" x-show="! copied" />
+                                        <x-heroicon-m-check class="text-brand-ink size-4" x-show="copied" x-cloak />
+                                        <span x-text="copied ? @js(__('Copiado')) : @js(__('Copiar monto'))">{{ __('Copiar monto') }}</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <dl class="divide-line border-line divide-y border-t">
@@ -112,7 +114,7 @@
                 <div class="mt-3 grid grid-cols-2 gap-x-3 gap-y-4">
                     <div class="col-span-2">
                         <label for="buyer-dni" class="field-label">{{ __('ID number') }}</label>
-                        <input id="buyer-dni" type="text" inputmode="numeric" autocomplete="off" class="field tabular-nums" placeholder="12345678" maxlength="12" wire:model="dni" x-on:change="$wire.$commit()" @error('dni') aria-invalid="true" aria-describedby="buyer-dni-error" @enderror>
+                        <input id="buyer-dni" type="text" inputmode="numeric" autocomplete="off" class="field tabular-nums" placeholder="12345678" maxlength="12" wire:model="dni" x-on:input="$el.value = $el.value.replace(/\D/g, '').slice(0, 9); $wire.set('dni', $el.value, false)" x-on:keydown="if (!/[0-9]/.test($event.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes($event.key) && !$event.ctrlKey && !$event.metaKey) $event.preventDefault()" x-on:change="$wire.$commit()" @error('dni') aria-invalid="true" aria-describedby="buyer-dni-error" @enderror>
                         @error('dni') <p id="buyer-dni-error" class="field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div>
@@ -127,7 +129,7 @@
                     </div>
                     <div class="col-span-2">
                         <label for="buyer-phone" class="field-label">{{ __('Mobile number') }}</label>
-                        <input id="buyer-phone" type="tel" inputmode="tel" autocomplete="tel" class="field tabular-nums" placeholder="0412 1234567" maxlength="20" wire:model="phone" x-on:change="$wire.$commit()" aria-describedby="buyer-phone-hint @error('phone') buyer-phone-error @enderror" @error('phone') aria-invalid="true" @enderror>
+                        <input id="buyer-phone" type="tel" inputmode="tel" autocomplete="tel" class="field tabular-nums" placeholder="0412 1234567" maxlength="20" wire:model="phone" x-on:input="$el.value = $el.value.replace(/[^0-9+\s-]/g, '').slice(0, 20); $wire.set('phone', $el.value, false)" x-on:keydown="if (!/[0-9+\s-]/.test($event.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes($event.key) && !$event.ctrlKey && !$event.metaKey) $event.preventDefault()" x-on:change="$wire.$commit()" aria-describedby="buyer-phone-hint @error('phone') buyer-phone-error @enderror" @error('phone') aria-invalid="true" @enderror>
                         @error('phone')
                             <p id="buyer-phone-error" class="field-error" role="alert">{{ $message }}</p>
                         @enderror
@@ -142,7 +144,7 @@
                 <div class="mt-3 space-y-4">
                     <div>
                         <label for="payment-reference" class="field-label">{{ __('Reference number') }}</label>
-                        <input id="payment-reference" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" class="field tabular-nums uppercase placeholder:normal-case" placeholder="{{ __('As shown on your receipt') }}" maxlength="40" wire:model="reference" x-on:change="$wire.$commit()" @error('reference') aria-invalid="true" aria-describedby="payment-reference-error" @enderror>
+                        <input id="payment-reference" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" class="field tabular-nums uppercase placeholder:normal-case" placeholder="{{ __('As shown on your receipt') }}" maxlength="40" wire:model="reference" x-on:input="$el.value = $el.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 40); $wire.set('reference', $el.value, false)" x-on:keydown="if (!/[a-zA-Z0-9]/.test($event.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes($event.key) && !$event.ctrlKey && !$event.metaKey) $event.preventDefault()" x-on:change="$wire.$commit()" @error('reference') aria-invalid="true" aria-describedby="payment-reference-error" @enderror>
                         @error('reference') <p id="payment-reference-error" class="field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
 

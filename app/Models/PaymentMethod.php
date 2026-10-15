@@ -48,6 +48,51 @@ class PaymentMethod extends Model
             ->join("\n");
     }
 
+    public function bankKey(): ?string
+    {
+        $bank = strtolower(($this->description['Banco'] ?? '').' '.$this->title);
+        if (str_contains($bank, '0102') || str_contains($bank, 'venezuela') || str_contains($bank, 'bdv')) {
+            return 'bdv';
+        }
+        if (str_contains($bank, '0134') || str_contains($bank, 'banesco')) {
+            return 'banesco';
+        }
+        if (str_contains($bank, '0105') || str_contains($bank, 'mercantil')) {
+            return 'mercantil';
+        }
+        if (str_contains($bank, '0108') || str_contains($bank, 'provincial') || str_contains($bank, 'bbva')) {
+            return 'provincial';
+        }
+        if (str_contains($bank, '0172') || str_contains($bank, 'bancamiga')) {
+            return 'bancamiga';
+        }
+        if (str_contains($bank, '0191') || str_contains($bank, 'bnc') || str_contains($bank, 'nacional de credito')) {
+            return 'bnc';
+        }
+
+        return null;
+    }
+
+    /**
+     * Formats all payment details into a clean string ready for Venezuelan banking apps paste feature.
+     */
+    public function clipboardPayload(?string $amount = null): string
+    {
+        $lines = [];
+
+        if (! empty($this->description)) {
+            foreach ($this->description as $label => $value) {
+                $lines[] = "{$label}: {$value}";
+            }
+        }
+
+        if (filled($amount)) {
+            $lines[] = "Monto: {$amount}";
+        }
+
+        return implode("\n", $lines);
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class, 'payment_method_id');
