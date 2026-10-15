@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Tenancy\EditTeamProfile;
 use App\Filament\Pages\Tenancy\RegisterTeam;
 use App\Models\Team;
 use Filament\Facades\Filament;
@@ -140,10 +141,39 @@ class AdminPanelProvider extends PanelProvider
                         .iti__selected-flag {
                             padding: 0 0.75rem !important;
                         }
+                        /* Floating cards layout for Payment Methods (no table container) */
+                        .fi-ta-floating-cards .fi-ta-ctn {
+                            background-color: transparent !important;
+                            border: none !important;
+                            box-shadow: none !important;
+                            ring: none !important;
+                            --tw-ring-shadow: none !important;
+                            --tw-shadow: none !important;
+                            border-radius: 0 !important;
+                        }
+                        .fi-ta-floating-cards .fi-ta-header-ctn,
+                        .fi-ta-floating-cards .fi-ta-header,
+                        .fi-ta-floating-cards thead {
+                            display: none !important;
+                        }
+                        .fi-ta-floating-cards .fi-ta-group-header {
+                            background-color: transparent !important;
+                            border: none !important;
+                            box-shadow: none !important;
+                            padding: 1.25rem 0.25rem 0.5rem !important;
+                        }
+                        .fi-ta-floating-cards .fi-ta-group-heading {
+                            font-size: 1.125rem !important;
+                            font-weight: 700 !important;
+                            color: inherit !important;
+                        }
+                        .fi-ta-floating-cards .fi-ta-content-grid {
+                            gap: 1rem !important;
+                        }
                     </style>
                 ')
             )
             ->registration()
-            ->tenantProfile(\App\Filament\Pages\Tenancy\EditTeamProfile::class);
+            ->tenantProfile(EditTeamProfile::class);
     }
 }

@@ -7,8 +7,6 @@ use App\Filament\Resources\PaymentMethodResource\Pages\CreatePaymentMethod;
 use App\Filament\Resources\PaymentMethodResource\Pages\EditPaymentMethod;
 use App\Filament\Resources\PaymentMethodResource\Pages\ListPaymentMethods;
 use App\Models\PaymentMethod;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Placeholder;
@@ -225,7 +223,13 @@ class PaymentMethodResource extends Resource
                         'USD' => '🇺🇸 Cuentas en Divisas / Cripto (USD)',
                         default => $record->currency,
                     })
+                    ->titlePrefixedWithLabel(false)
                     ->collapsible(false),
+            ])
+            ->groupingSettingsHidden()
+            ->paginated(false)
+            ->extraAttributes([
+                'class' => 'fi-ta-floating-cards',
             ])
             ->contentGrid([
                 'default' => 1,
@@ -244,9 +248,7 @@ class PaymentMethodResource extends Resource
                                 PaymentMethodType::Binance => 'heroicon-o-currency-dollar',
                                 PaymentMethodType::Zelle => 'heroicon-o-bolt',
                                 default => 'heroicon-o-credit-card',
-                            })
-                            ->searchable()
-                            ->sortable(),
+                            }),
                         ToggleColumn::make('is_active')
                             ->label(__('Activo'))
                             ->grow(false),
@@ -295,11 +297,6 @@ class PaymentMethodResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
     }
 

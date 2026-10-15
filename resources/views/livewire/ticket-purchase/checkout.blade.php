@@ -64,7 +64,7 @@
                         @php($quote = $quotes[$method->id])
 
                         <div class="card mt-3 overflow-hidden" wire:key="instructions-{{ $method->id }}" x-show="$wire.paymentMethodId == {{ $method->id }}" x-cloak>
-                            <div class="bg-sunken px-5 py-5 text-center">
+                            <div class="bg-sunken px-5 py-5 text-center" x-data="copyable(@js($quote['plain']))">
                                 <p class="caption">{{ __('Exact amount to send') }}</p>
                                 <p class="mt-1 text-[2rem] leading-none font-extrabold tracking-tight tabular-nums">{{ $quote['amount'] }}</p>
 
@@ -74,19 +74,11 @@
                                     <p class="text-ink-soft mt-2 text-[0.8125rem] font-medium text-pretty">{{ __('Pay the equivalent in bolivars at the official BCV rate of the day.') }}</p>
                                 @endif
 
-                                <div class="mt-3.5 flex flex-wrap items-center justify-center gap-2">
-                                    <button type="button" class="btn btn-primary btn-sm min-h-9 gap-1.5 px-3.5 font-bold shadow-sm" x-data="copyable(@js($method->clipboardPayload($quote['amount'])))" x-on:click="copy()">
-                                        <x-heroicon-o-document-duplicate class="size-4" x-show="! copied" />
-                                        <x-heroicon-m-check class="text-on-brand size-4" x-show="copied" x-cloak />
-                                        <span x-text="copied ? @js(__('¡Datos copiados!')) : @js(__('Copiar todos los datos'))">{{ __('Copiar todos los datos') }}</span>
-                                    </button>
-
-                                    <button type="button" class="btn btn-secondary btn-sm min-h-9 gap-1.5 px-3" x-data="copyable(@js($quote['plain']))" x-on:click="copy()">
-                                        <x-heroicon-o-clipboard-document class="size-4" x-show="! copied" />
-                                        <x-heroicon-m-check class="text-brand-ink size-4" x-show="copied" x-cloak />
-                                        <span x-text="copied ? @js(__('Copiado')) : @js(__('Copiar monto'))">{{ __('Copiar monto') }}</span>
-                                    </button>
-                                </div>
+                                <button type="button" class="btn btn-secondary btn-sm mt-3.5 min-h-9 gap-1.5 px-3.5" x-on:click="copy()">
+                                    <x-heroicon-o-clipboard-document class="size-4" x-show="! copied" />
+                                    <x-heroicon-m-check class="text-brand-ink size-4" x-show="copied" x-cloak />
+                                    <span x-text="copied ? @js(__('Copied')) : @js(__('Copy amount'))">{{ __('Copy amount') }}</span>
+                                </button>
                             </div>
 
                             <dl class="divide-line border-line divide-y border-t">
@@ -103,6 +95,14 @@
                                     </div>
                                 @endforeach
                             </dl>
+
+                            <div class="border-line border-t p-3 bg-sunken/40" x-data="copyable(@js($method->clipboardPayload($quote['amount'])))">
+                                <button type="button" class="btn btn-primary w-full min-h-11 gap-2 text-sm font-bold shadow-sm" x-on:click="copy()">
+                                    <x-heroicon-o-document-duplicate class="size-5" x-show="! copied" />
+                                    <x-heroicon-m-check class="text-on-brand size-5" x-show="copied" x-cloak />
+                                    <span x-text="copied ? @js(__('¡Datos copiados!')) : @js(__('Copiar todos los datos'))">{{ __('Copiar todos los datos') }}</span>
+                                </button>
+                            </div>
                         </div>
                     @endforeach
                 @endif
