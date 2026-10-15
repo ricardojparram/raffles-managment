@@ -329,15 +329,22 @@ class PaymentMethodConfigurationTest extends TestCase
         $this->assertStringContainsString($raffle->publicUrl(), $text);
     }
 
-    public function test_public_raffle_page_renders_copy_all_data_button(): void
+    public function test_public_raffle_page_renders_share_modal_with_qr_and_social_links(): void
     {
         $raffle = Raffle::factory()->create(['team_id' => $this->team->id, 'title' => 'Moto Bera']);
 
-        $this->get($raffle->publicUrl())
+        $response = $this->get($raffle->publicUrl());
+
+        $response
             ->assertOk()
-            ->assertSee('x-data="copyable', false)
-            ->assertSee(__('Copiar datos'))
-            ->assertSee('aria-label="'.__('Copiar datos de la rifa').'"', false);
+            ->assertDontSee(__('Copiar datos'))
+            ->assertSee('x-on:click="shareModalOpen = true"', false)
+            ->assertSee(__('Compartir rifa'))
+            ->assertSee('data:image/svg+xml;base64,', false)
+            ->assertSee('WhatsApp')
+            ->assertSee('Telegram')
+            ->assertSee('Facebook')
+            ->assertSee(__('Copiar texto completo para WhatsApp'));
     }
 
     public function test_payment_method_bank_key_detects_venezuelan_banks(): void

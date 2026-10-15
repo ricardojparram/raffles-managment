@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\SalesStatus;
 use App\Enums\Status;
 use App\Models\Concerns\BelongsToTeam;
+use chillerlan\QRCode\QRCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -211,6 +212,14 @@ class Raffle extends Model
             $this->availableTicketsCount() === 0 => SalesStatus::SoldOut,
             default => SalesStatus::Open,
         };
+    }
+
+    /**
+     * Generates a vector SVG QR code data URI for the raffle's public URL.
+     */
+    public function qrCodeDataUri(): string
+    {
+        return (new QRCode)->render($this->publicUrl());
     }
 
     /**
