@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Actions\SeedTeamPaymentMethods;
 use App\Enums\PaymentMethodType;
-use App\Filament\Resources\PaymentMethodResource\Pages\CreatePaymentMethod;
+use App\Filament\Resources\PaymentMethodResource;
 use App\Filament\Resources\PaymentMethodResource\Pages\EditPaymentMethod;
 use App\Filament\Resources\PaymentMethodResource\Pages\ListPaymentMethods;
 use App\Livewire\TicketPurchase;
@@ -14,6 +14,7 @@ use App\Models\Team;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -71,41 +72,81 @@ class PaymentMethodConfigurationTest extends TestCase
             ->assertTableColumnStateSet('is_active', true, $method);
     }
 
-    public function test_payment_method_can_be_created_with_structured_pago_movil_fields(): void
+    public function test_organizers_cannot_create_or_delete_payment_methods(): void
     {
-        Livewire::test(CreatePaymentMethod::class)
+        $method = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::PagoMovil,
+            'title' => 'Pago Móvil BDV',
+            'currency' => 'VED',
+            'is_active' => true,
+        ]);
+
+        $this->assertFalse(PaymentMethodResource::canCreate());
+        $this->assertFalse(PaymentMethodResource::canDelete($method));
+        $this->assertFalse(Gate::forUser($this->user)->allows('create', PaymentMethod::class));
+        $this->assertFalse(Gate::forUser($this->user)->allows('delete', $method));
+
+        Livewire::test(ListPaymentMethods::class)
+            ->assertActionDoesNotExist('create');
+
+        Livewire::test(EditPaymentMethod::class, ['record' => $method->getRouteKey()])
+            ->assertActionDoesNotExist('delete');
+    }
+
+    public function test_payment_method_edit_disallows_modifying_type_title_and_currency_and_saves_details_and_active(): void
+    {
+        $method = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::PagoMovil,
+            'title' => 'Pago Móvil',
+            'currency' => 'VED',
+            'is_active' => true,
+            'description' => [
+                'Banco' => 'Banco de Venezuela (0102)',
+                'Teléfono' => '0412-0000000',
+                'Cédula' => 'V-00000000',
+            ],
+        ]);
+
+        Livewire::test(EditPaymentMethod::class, ['record' => $method->getRouteKey()])
+            ->assertFormFieldIsDisabled('type')
+            ->assertFormFieldIsDisabled('title')
+            ->assertFormFieldIsDisabled('currency')
             ->fillForm([
-                'type' => PaymentMethodType::PagoMovil->value,
-                'title' => 'Pago Móvil Banesco',
-                'currency' => 'VED',
-                'is_active' => true,
+                'is_active' => false,
                 'description' => [
                     'Banco' => 'Banesco (0134)',
                     'Teléfono' => '0414-1234567',
                     'Cédula' => 'V-19876543',
                 ],
             ])
-            ->call('create')
+            ->call('save')
             ->assertHasNoFormErrors();
 
-        $created = PaymentMethod::where('team_id', $this->team->id)->where('title', 'Pago Móvil Banesco')->first();
-        $this->assertNotNull($created);
-        $this->assertSame(PaymentMethodType::PagoMovil, $created->type);
-        $this->assertSame('VED', $created->currency);
-        $this->assertTrue($created->is_active);
-        $this->assertSame('Banesco (0134)', $created->description['Banco']);
-        $this->assertSame('0414-1234567', $created->description['Teléfono']);
-        $this->assertSame('V-19876543', $created->description['Cédula']);
+        $method->refresh();
+        $this->assertSame(PaymentMethodType::PagoMovil, $method->type);
+        $this->assertSame('Pago Móvil', $method->title);
+        $this->assertSame('VED', $method->currency);
+        $this->assertFalse($method->is_active);
+        $this->assertSame('Banesco (0134)', $method->description['Banco']);
+        $this->assertSame('0414-1234567', $method->description['Teléfono']);
+        $this->assertSame('V-19876543', $method->description['Cédula']);
     }
 
-    public function test_payment_method_can_be_created_with_transferencia_and_binance(): void
+    public function test_payment_method_edit_supports_transferencia_and_binance_details(): void
     {
-        Livewire::test(CreatePaymentMethod::class)
+        $transferencia = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::Transferencia,
+            'title' => 'Transferencia Bancaria',
+            'currency' => 'VED',
+            'is_active' => true,
+            'description' => [],
+        ]);
+
+        Livewire::test(EditPaymentMethod::class, ['record' => $transferencia->getRouteKey()])
             ->fillForm([
-                'type' => PaymentMethodType::Transferencia->value,
-                'title' => 'Transferencia Mercantil',
-                'currency' => 'VED',
-                'is_active' => true,
                 'description' => [
                     'Banco' => 'Mercantil (0105)',
                     'Número de Cuenta' => '01050000000000000000',
@@ -113,53 +154,35 @@ class PaymentMethodConfigurationTest extends TestCase
                     'Titular' => 'Rifas Caracas C.A.',
                 ],
             ])
-            ->call('create')
+            ->call('save')
             ->assertHasNoFormErrors();
 
-        $transferencia = PaymentMethod::where('team_id', $this->team->id)->where('title', 'Transferencia Mercantil')->first();
-        $this->assertNotNull($transferencia);
-        $this->assertSame(PaymentMethodType::Transferencia, $transferencia->type);
+        $transferencia->refresh();
         $this->assertSame('01050000000000000000', $transferencia->description['Número de Cuenta']);
+        $this->assertSame('Mercantil (0105)', $transferencia->description['Banco']);
 
-        Livewire::test(CreatePaymentMethod::class)
+        $binance = PaymentMethod::factory()->create([
+            'team_id' => $this->team->id,
+            'type' => PaymentMethodType::Binance,
+            'title' => 'Binance Pay',
+            'currency' => 'USD',
+            'is_active' => true,
+            'description' => [],
+        ]);
+
+        Livewire::test(EditPaymentMethod::class, ['record' => $binance->getRouteKey()])
             ->fillForm([
-                'type' => PaymentMethodType::Binance->value,
-                'title' => 'Binance Pay USDT',
-                'currency' => 'USD',
-                'is_active' => true,
                 'description' => [
                     'Pay ID' => '99887766',
                     'Usuario' => 'rifas_ccs',
                 ],
             ])
-            ->call('create')
+            ->call('save')
             ->assertHasNoFormErrors();
 
-        $binance = PaymentMethod::where('team_id', $this->team->id)->where('title', 'Binance Pay USDT')->first();
-        $this->assertNotNull($binance);
-        $this->assertSame(PaymentMethodType::Binance, $binance->type);
-        $this->assertSame('99887766', $binance->description['Pay ID']);
-    }
-
-    public function test_payment_method_can_be_created_with_custom_fallback(): void
-    {
-        Livewire::test(CreatePaymentMethod::class)
-            ->fillForm([
-                'type' => PaymentMethodType::Custom->value,
-                'title' => 'Zinli',
-                'currency' => 'USD',
-                'is_active' => true,
-                'custom_description' => [
-                    'Correo' => 'zinli@rifascaracas.com',
-                ],
-            ])
-            ->call('create')
-            ->assertHasNoFormErrors();
-
-        $custom = PaymentMethod::where('team_id', $this->team->id)->where('title', 'Zinli')->first();
-        $this->assertNotNull($custom);
-        $this->assertSame(PaymentMethodType::Custom, $custom->type);
-        $this->assertSame('zinli@rifascaracas.com', $custom->description['Correo']);
+        $binance->refresh();
+        $this->assertEquals('99887766', $binance->description['Pay ID']);
+        $this->assertSame('rifas_ccs', $binance->description['Usuario']);
     }
 
     public function test_payment_method_can_be_edited_and_toggled(): void

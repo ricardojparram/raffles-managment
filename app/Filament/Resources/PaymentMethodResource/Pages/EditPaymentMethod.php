@@ -4,7 +4,6 @@ namespace App\Filament\Resources\PaymentMethodResource\Pages;
 
 use App\Enums\PaymentMethodType;
 use App\Filament\Resources\PaymentMethodResource;
-use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditPaymentMethod extends EditRecord
@@ -13,14 +12,12 @@ class EditPaymentMethod extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            DeleteAction::make(),
-        ];
+        return [];
     }
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $type = $data['type'] ?? null;
+        $type = $data['type'] ?? $this->record?->type;
         $enum = $type instanceof PaymentMethodType ? $type : PaymentMethodType::tryFrom((string) $type);
 
         if ($enum === PaymentMethodType::Custom || $enum === null) {
@@ -32,7 +29,7 @@ class EditPaymentMethod extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $type = $data['type'] ?? null;
+        $type = $data['type'] ?? $this->record?->type;
         $enum = $type instanceof PaymentMethodType ? $type : PaymentMethodType::tryFrom((string) $type);
 
         if ($enum === PaymentMethodType::Custom || ($enum === null && ! empty($data['custom_description']))) {

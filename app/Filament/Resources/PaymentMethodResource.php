@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Enums\PaymentMethodType;
-use App\Filament\Resources\PaymentMethodResource\Pages\CreatePaymentMethod;
 use App\Filament\Resources\PaymentMethodResource\Pages\EditPaymentMethod;
 use App\Filament\Resources\PaymentMethodResource\Pages\ListPaymentMethods;
 use App\Models\PaymentMethod;
@@ -17,7 +16,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
@@ -25,6 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class PaymentMethodResource extends Resource
 {
@@ -49,10 +48,20 @@ class PaymentMethodResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
     public static function form(Schema $schema): Schema
     {
-        $matchesType = function (Get $get, PaymentMethodType ...$targets): bool {
-            $current = $get('type');
+        $matchesType = function (Get $get, ?PaymentMethod $record, PaymentMethodType ...$targets): bool {
+            $current = $get('type') ?? $record?->type;
             if ($current instanceof PaymentMethodType) {
                 return in_array($current, $targets, true);
             }
@@ -65,7 +74,7 @@ class PaymentMethodResource extends Resource
         return $schema
             ->components([
                 Section::make(__('Configuración del Método'))
-                    ->description(__('Configurá el canal de pago, si está activo y su moneda.'))
+                    ->description(__('Canal de pago preconfigurado por la plataforma. Activá o desactivá su disponibilidad y completá los datos de cobro.'))
                     ->icon('heroicon-o-credit-card')
                     ->schema([
                         Grid::make(3)
@@ -73,35 +82,21 @@ class PaymentMethodResource extends Resource
                                 Select::make('type')
                                     ->label(__('Tipo de método'))
                                     ->options(PaymentMethodType::class)
-                                    ->live()
-                                    ->afterStateUpdated(function (Get $get, Set $set, mixed $state) {
-                                        if (! $state) {
-                                            return;
-                                        }
-                                        $enum = $state instanceof PaymentMethodType ? $state : PaymentMethodType::tryFrom((string) $state);
-                                        if ($enum) {
-                                            $currentTitle = $get('title');
-                                            $titles = array_map(fn ($e) => $e->defaultTitle(), PaymentMethodType::cases());
-                                            if (blank($currentTitle) || in_array($currentTitle, $titles, true)) {
-                                                $set('title', $enum->defaultTitle());
-                                            }
-                                            $set('currency', $enum->defaultCurrency());
-                                        }
-                                    })
-                                    ->required(),
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->helperText(__('Definido por la plataforma.')),
                                 TextInput::make('title')
                                     ->label(__('Nombre'))
-                                    ->placeholder(__('Ej. Pago Móvil BDV, Zelle'))
-                                    ->rules(['required', 'string', 'max:255'])
-                                    ->markAsRequired(),
+                                    ->disabled()
+                                    ->dehydrated(false),
                                 Select::make('currency')
                                     ->label(__('Moneda'))
                                     ->options([
                                         'VED' => '🇻🇪 Bolívar (VED) - Bs.',
                                         'USD' => '🇺🇸 Dólar (USD) - $',
                                     ])
-                                    ->required()
-                                    ->default('VED'),
+                                    ->disabled()
+                                    ->dehydrated(false),
                             ]),
 
                         Toggle::make('is_active')
@@ -129,59 +124,61 @@ class PaymentMethodResource extends Resource
                                 'Banco del Tesoro (0163)' => 'Banco del Tesoro (0163)',
                             ])
                             ->searchable()
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::PagoMovil, PaymentMethodType::Transferencia))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::PagoMovil, PaymentMethodType::Transferencia)),
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::PagoMovil, PaymentMethodType::Transferencia))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::PagoMovil, PaymentMethodType::Transferencia)),
 
                         TextInput::make('description.Teléfono')
                             ->label(__('Teléfono receptor'))
-                            ->placeholder('Ej. 0412-1234567')
+                            ->placeholder('0412-1234567')
+                            ->mask('9999-9999999')
                             ->tel()
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::PagoMovil))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::PagoMovil)),
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::PagoMovil))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::PagoMovil)),
 
                         TextInput::make('description.Cédula')
                             ->label(__('Cédula o RIF'))
                             ->placeholder('Ej. V-12345678')
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::PagoMovil))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::PagoMovil)),
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::PagoMovil))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::PagoMovil)),
 
                         TextInput::make('description.Número de Cuenta')
                             ->label(__('Número de Cuenta (20 dígitos)'))
                             ->placeholder('0102-0000-00-0000000000')
-                            ->maxLength(24)
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::Transferencia))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::Transferencia)),
+                            ->mask('9999-9999-99-9999999999')
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Transferencia))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Transferencia)),
 
                         TextInput::make('description.Cédula / RIF')
                             ->label(__('Cédula / RIF del Titular'))
                             ->placeholder('Ej. J-12345678-0')
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::Transferencia))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::Transferencia)),
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Transferencia))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Transferencia)),
 
                         TextInput::make('description.Titular')
                             ->label(__('Nombre del Titular'))
                             ->placeholder('Ej. Rifas y Eventos C.A. o Nombre Completo')
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::Transferencia, PaymentMethodType::Zelle))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::Transferencia, PaymentMethodType::Zelle)),
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Transferencia, PaymentMethodType::Zelle))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Transferencia, PaymentMethodType::Zelle)),
 
                         TextInput::make('description.Pay ID')
                             ->label(__('Binance Pay ID'))
                             ->placeholder('Ej. 284551903')
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::Binance))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::Binance)),
+                            ->numeric()
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Binance))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Binance)),
 
                         TextInput::make('description.Usuario')
                             ->label(__('Usuario Binance'))
                             ->placeholder('Ej. rifas_elchamo')
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::Binance))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::Binance)),
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Binance))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Binance)),
 
                         TextInput::make('description.Correo')
                             ->label(__('Correo electrónico Zelle'))
                             ->email()
                             ->placeholder('pagos@ejemplo.com')
-                            ->required(fn (Get $get) => $matchesType($get, PaymentMethodType::Zelle))
-                            ->visible(fn (Get $get) => $matchesType($get, PaymentMethodType::Zelle)),
+                            ->required(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Zelle))
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => $matchesType($get, $record, PaymentMethodType::Zelle)),
 
                         KeyValue::make('custom_description')
                             ->label(__('Detalles personalizados'))
@@ -190,8 +187,9 @@ class PaymentMethodResource extends Resource
                             ->addActionLabel(__('Agregar fila'))
                             ->reorderable()
                             ->columnSpanFull()
-                            ->visible(fn (Get $get) => ! $matchesType(
+                            ->visible(fn (Get $get, ?PaymentMethod $record) => ! $matchesType(
                                 $get,
+                                $record,
                                 PaymentMethodType::PagoMovil,
                                 PaymentMethodType::Transferencia,
                                 PaymentMethodType::Binance,
@@ -311,7 +309,6 @@ class PaymentMethodResource extends Resource
     {
         return [
             'index' => ListPaymentMethods::route('/'),
-            'create' => CreatePaymentMethod::route('/create'),
             'edit' => EditPaymentMethod::route('/{record}/edit'),
         ];
     }

@@ -17,6 +17,7 @@ class PaymentMethodPolicy
     public function viewAny(User $user): bool
     {
         $tenant = $this->currentTenant();
+
         return $tenant !== null && $user->isAdminOf($tenant);
     }
 
@@ -32,8 +33,7 @@ class PaymentMethodPolicy
 
     public function create(User $user): bool
     {
-        $tenant = $this->currentTenant();
-        return $tenant !== null && $user->isAdminOf($tenant);
+        return false;
     }
 
     public function update(User $user, PaymentMethod $paymentMethod): bool
@@ -48,11 +48,6 @@ class PaymentMethodPolicy
 
     public function delete(User $user, PaymentMethod $paymentMethod): bool
     {
-        $tenant = $this->currentTenant();
-        if (! $tenant || ! $user->isOwnerOf($tenant)) {
-            return false;
-        }
-
-        return (int) $paymentMethod->team_id === (int) $tenant->id;
+        return false;
     }
 }
